@@ -1,0 +1,5 @@
+patpat_env/
+*.egg-info/
+test/
+patpat/__pycache__/
+.idea/
