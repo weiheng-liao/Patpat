@@ -52,10 +52,10 @@ class PrideChecker(GenericChecker):
         print(f"\tPeptide Retriever: {bool(self.flag['peptide'])}")
 
         if len([i for i in self.flag.values() if i]) == len(self.retrievers):
-            print(f"Welcome to use PRIDEMapper")
+            print("Welcome to use PRIDEMapper")
             return mapper.PrideMapper()
         else:
-            print(f"PRIDEMapper is not recommended")
+            print("PRIDEMapper is not recommended")
 
     def check(self):
         self._implement()
@@ -86,7 +86,7 @@ class PrideChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the PRIDE Project API")
+        print("\nCheck the connectivity of the PRIDE Project API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 c = requests.get(t.api, params=t.example)
@@ -109,7 +109,7 @@ class PrideChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the PRIDE Protein API")
+        print("\nCheck the connectivity of the PRIDE Protein API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 payloads = {'proteinAccession': t.example,
@@ -134,7 +134,7 @@ class PrideChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the PRIDE Peptide API")
+        print("\nCheck the connectivity of the PRIDE Peptide API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 payloads = {'peptideSequence': t.example,
@@ -182,10 +182,10 @@ class IProXChecker(GenericChecker):
         print(f"\tPeptide Retriever: {bool(self.flag['peptide'])}")
 
         if len([i for i in self.flag.values() if i]) == len(self.retrievers):
-            print(f"Welcome to use IProXMapper")
+            print("Welcome to use IProXMapper")
             return mapper.IProXMapper()
         else:
-            print(f"IProXMapper is not recommended")
+            print("IProXMapper is not recommended")
 
     def check(self):
         self._implement()
@@ -216,7 +216,7 @@ class IProXChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the iProX Project API")
+        print("\nCheck the connectivity of the iProX Project API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 c = requests.get("/".join([t.api, t.example]))
@@ -239,7 +239,7 @@ class IProXChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the iProX Protein API")
+        print("\nCheck the connectivity of the iProX Protein API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 payloads = {'proteinAccession': t.example,
@@ -266,7 +266,7 @@ class IProXChecker(GenericChecker):
         flag = False
         message = []
 
-        print(f"\nCheck the connectivity of the iProX Peptide API")
+        print("\nCheck the connectivity of the iProX Peptide API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
                 payloads = {'peptideSequence': t.example,
@@ -322,10 +322,10 @@ class MassIVEChecker(GenericChecker):
         print(f"\tpeptide2project Retriever: {bool(self.flag['peptide2project'])}")
 
         if len([i for i in self.flag.values() if i]) == len(self.retrievers):
-            print(f"Welcome to use MassIVEMapper")
+            print("Welcome to use MassIVEMapper")
             return mapper.MassIVEMapper()
         else:
-            print(f"MassIVEMapper is not recommended")
+            print("MassIVEMapper is not recommended")
 
     def check(self):
         self._implement()

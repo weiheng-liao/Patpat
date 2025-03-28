@@ -35,7 +35,7 @@ def init():
                 print(f'\033[0;31mWarning! This directory already exists. 警告！该目录已经存在。[patpat_env/{dir_}]\033[0m')
 
     if os.path.exists('patpat_env/'):
-        print(f'\033[0;31mWarning! This directory already exists. 警告！该目录已经存在。[patpat_env/]\033[0m')
+        print('\033[0;31mWarning! This directory already exists. 警告！该目录已经存在。[patpat_env/]\033[0m')
         init_subdir()
     else:
         os.mkdir('patpat_env/')

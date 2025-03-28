@@ -261,7 +261,7 @@ class PrideMapper(Mapper):
         del_projects = []
         for p in self._project_base.values():
             project_org = [i['accession'] for i in p['organisms']]
-            if not self._organism['accession'] in project_org:
+            if self._organism['accession'] not in project_org:
                 del_projects.extend([p['accession']])
         for p in del_projects:
             self._project_base.pop(p)

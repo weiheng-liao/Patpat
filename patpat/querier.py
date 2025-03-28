@@ -338,7 +338,7 @@ class LocalPeptideQuerier(PeptideQuerier):
                 if flag == 'y':
                     source = utility.download_uniprot_opg(taxonomy_id)
                 else:
-                    raise FileNotFoundError(f'User cancel operation.')
+                    raise FileNotFoundError('User cancel operation.')
 
             else:
                 target_file = [i[0] for i in target_files if i[2] == max([j[2] for j in target_files])][0]

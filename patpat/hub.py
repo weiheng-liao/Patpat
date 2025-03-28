@@ -253,7 +253,7 @@ class MapperHub:
         """Set Mappers"""
         for mapper_ in mappers:
             if (type(mapper_) in self.supported_mappers and
-                    not type(mapper_) in [type(m) for m in self.mappers]):
+                    type(mapper_) not in [type(m) for m in self.mappers]):
                 self.mappers.add(mapper_)
 
     def mapping(self):

@@ -2,7 +2,6 @@
 
 # Load Patpat package
 import patpat.hub as hub
-import patpat.mapper as mapper
 import patpat.utility as utility
 
 # Create runtime environment and initiate UniProt's proteome catalog.
