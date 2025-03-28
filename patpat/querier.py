@@ -33,7 +33,7 @@ import requests
 import tqdm
 from pyteomics import parser, fasta
 
-from . import utility
+from patpat import utility
 
 
 class ProteinQuerier(object):

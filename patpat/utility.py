@@ -62,7 +62,7 @@ def initiate_uniprot_proteome_catalog():
     readme = "http://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/README"
     response = requests.get(readme)
     download_time = time.strftime('%Y-%m-%d', time.localtime())
-    with open(f'patpat_env/proteome/UP_README_{download_time}', mode='wb') as f:
+    with open(f'patpat_env/proteome/UP_README_{download_time}', mode='w') as f:
         f.write(response.text)
     print('Uniprot_proteome_list has been initiated.')
 
@@ -103,7 +103,7 @@ def download_uniprot_opg(taxonomy_id):
     tax_division = target['SUPERREGNUM'].values[0].capitalize()
     up_id = target['Proteome_ID'].values[0]
 
-    ftp = FTP('ftp.uniprot.org')
+    ftp = FTP('ftp.ebi.ac.uk')
     ftp.login()
     ftp.cwd(f'./pub/databases/uniprot/current_release/'
             f'knowledgebase/reference_proteomes/{tax_division}/{up_id}')
