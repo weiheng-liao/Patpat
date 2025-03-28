@@ -9,7 +9,7 @@ utility.init()
 utility.initiate_uniprot_proteome_catalog()
 
 # Get the search configs via the QueryHub
-identifier_ = 'P23950'
+identifier_ = "P23950"
 q = hub.QueryHub()
 q.identifier = identifier_
 q.simple_query()
@@ -18,9 +18,10 @@ q.simple_query()
 conf_ = q.get_query_config()
 mappers_ = hub.CheckerHub().check()
 
-m = hub.MapperHub(config=conf_,
-                  mappers=mappers_,
-                  )
+m = hub.MapperHub(
+    config=conf_,
+    mappers=mappers_,
+)
 m.mapping()
 
 result_ = m.export()

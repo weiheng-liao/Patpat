@@ -71,15 +71,13 @@ class Retriever(object):
 
 
 class GenericPrideRetriever(Retriever):
-    """Generic base class for PRIDE database. 针对PRIDE数据库的通用基类。
-
-    """
+    """Generic base class for PRIDE database. 针对PRIDE数据库的通用基类。"""
 
     def __init__(self):
-        self._request_word = ''  # Keywords to be requested 需要请求的关键词
+        self._request_word = ""  # Keywords to be requested 需要请求的关键词
         self.headers = None  # HTTP protocol headers HTTP协议的标头
         self.payloads = None  # parameters. 参数列表
-        self.url = ''  # URL 网址
+        self.url = ""  # URL 网址
 
     def retrieve(self):
         """Call the methods run by the class PrideRetriever. 调用PrideRetriever类运行的方法。"""
@@ -91,7 +89,7 @@ class GenericPrideRetriever(Retriever):
 
     def get_payloads_on_web(self):
         """Access PRIDE API and get the list of parameters of the URL through redirection.
-           访问PRIDE API并通过重定向获得URL的参数列表。
+        访问PRIDE API并通过重定向获得URL的参数列表。
         """
         raise NotImplementedError
 
@@ -112,39 +110,53 @@ class GenericPrideRetriever(Retriever):
             KeyError: Catching this error means that request.json()['_embedded'] does not exist,
              i.e. the page is the end page. 捕捉到这个错误意味着request.json()['_embedded']不存在，也就是说，该页面是结束页。
         """
-        page = payloads['page']
+        page = payloads["page"]
 
         # Almost all of the if-else judgments in this function are used to determine which page number should be
         # written to the log.
         # 这个函数中几乎所有的if-else判断都是用来确定哪一个页码应该被写入日志的。
         if int(page) == 0:
-            logging.getLogger('core').debug("----------------------------------------")
-            logging.getLogger('core').debug("\tTest if the {} page is the end page.".format(str(int(page))))
+            logging.getLogger("core").debug("----------------------------------------")
+            logging.getLogger("core").debug(
+                "\tTest if the {} page is the end page.".format(str(int(page)))
+            )
         else:
-            logging.getLogger('core').debug("----------------------------------------")
-            logging.getLogger('core').debug("\tTest if the {} page is the end page.".format(str(int(page) - 1)))
+            logging.getLogger("core").debug("----------------------------------------")
+            logging.getLogger("core").debug(
+                "\tTest if the {} page is the end page.".format(str(int(page) - 1))
+            )
 
         n = 0
         end = 3
         for n in range(0, end, 1):
             d = requests.get(url, params=payloads)
-            time.sleep(random.random())  # Take a break and avoid frequent access. 歇歇，避免频繁访问。
+            time.sleep(
+                random.random()
+            )  # Take a break and avoid frequent access. 歇歇，避免频繁访问。
             if d.ok:
                 try:
-                    _ = d.json()['_embedded']
+                    _ = d.json()["_embedded"]
                 except KeyError:
                     pass
                 else:
-                    logging.getLogger('core').debug("\tthe {} page is not the end page.".format(str(int(page) - 1)))
-                    logging.getLogger('core').debug("----------------------------------------")
+                    logging.getLogger("core").debug(
+                        "\tthe {} page is not the end page.".format(str(int(page) - 1))
+                    )
+                    logging.getLogger("core").debug(
+                        "----------------------------------------"
+                    )
                     return False
         if n == end - 1 and int(page) != 0:
-            logging.getLogger('core').debug("\tthe {} page is the end page.".format(str(int(page) - 1)))
-            logging.getLogger('core').debug("----------------------------------------")
+            logging.getLogger("core").debug(
+                "\tthe {} page is the end page.".format(str(int(page) - 1))
+            )
+            logging.getLogger("core").debug("----------------------------------------")
             return True
         elif n == end - 1 and int(page) == 0:
-            logging.getLogger('core').debug("\tthe {} page is the end page.".format(str(int(page))))
-            logging.getLogger('core').debug("----------------------------------------")
+            logging.getLogger("core").debug(
+                "\tthe {} page is the end page.".format(str(int(page)))
+            )
+            logging.getLogger("core").debug("----------------------------------------")
             return True
 
 
@@ -154,8 +166,8 @@ class PrideProjectRetriever(GenericPrideRetriever):
     def __init__(self):
         super().__init__()
         self.response = dict()  # Collect the returned data through this property. 通过这个属性收集返回的数据。
-        self.api = 'https://www.ebi.ac.uk/pride/ws/archive/v2/projects'
-        self.example = 'PXD003415'
+        self.api = "https://www.ebi.ac.uk/pride/ws/archive/v2/projects"
+        self.example = "PXD003415"
 
     @property
     def request_word(self):
@@ -172,7 +184,7 @@ class PrideProjectRetriever(GenericPrideRetriever):
             request_word: keyword 请求关键词
         """
         if re.search("pxd", request_word, re.I) is None:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
         else:
             self._request_word = request_word
 
@@ -187,15 +199,15 @@ class PrideProjectRetriever(GenericPrideRetriever):
 
         """
         url_response = self.url_requester()
-        logging.getLogger('core').debug('query:{}'.format(self._request_word))
+        logging.getLogger("core").debug("query:{}".format(self._request_word))
 
         if url_response.ok:
             url_response = url_response.json()
         else:
-            logging.error('No correct return transmission received! 未收到正确回传！')
+            logging.error("No correct return transmission received! 未收到正确回传！")
             url_response = dict()
 
-        time.sleep(.3)
+        time.sleep(0.3)
         self.response = url_response
         return self.response
 
@@ -207,19 +219,22 @@ class PrideProjectRetriever(GenericPrideRetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
 
         self.url = "/".join((self.api, self._request_word))
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads,
-                                    timeout=120  # Avoid blocking
-                                    )
+        url_response = requests.get(
+            self.url,
+            headers=self.headers,
+            params=self.payloads,
+            timeout=120,  # Avoid blocking
+        )
 
         return url_response
 
     def get_payloads_on_web(self):
         """Occupy a seat 占位"""
-        raise NotImplementedError("Don\'t need that in this class. 该类不需要这个！")
+        raise NotImplementedError("Don't need that in this class. 该类不需要这个！")
 
 
 class PridePeptideRetriever(GenericPrideRetriever):
@@ -229,7 +244,7 @@ class PridePeptideRetriever(GenericPrideRetriever):
         super().__init__()
         self.response = dict()  # Collect the returned data through this property. 通过这个属性收集返回的数据。
         self.api = "https://www.ebi.ac.uk/pride/ws/archive/v2/spectra"
-        self.example = 'TCVADESAENCDK'
+        self.example = "TCVADESAENCDK"
 
     @property
     def request_word(self):
@@ -264,20 +279,27 @@ class PridePeptideRetriever(GenericPrideRetriever):
         response = dict()
         flag = False
 
-        logging.getLogger('core').info('query:{}'.format(self._request_word))
+        logging.getLogger("core").info("query:{}".format(self._request_word))
         while flag is False:
             page = payloads["page"]
-            url_response = requests.get(url, headers=headers, params=payloads,
-                                        timeout=60  # Avoid blocking
-                                        ).json()
+            url_response = requests.get(
+                url,
+                headers=headers,
+                params=payloads,
+                timeout=60,  # Avoid blocking
+            ).json()
             try:
-                response["page:{}".format(page)] = {'spectraevidences': url_response['_embedded']['spectraevidences']}
+                response["page:{}".format(page)] = {
+                    "spectraevidences": url_response["_embedded"]["spectraevidences"]
+                }
             except KeyError:
                 flag = True
                 # flag = self.check_end_page(url, payloads)
             else:
-                response["page:{}".format(page)]['link'] = url_response["_links"]["self"]["href"]
-                logging.getLogger('core').info("page {} is completed.".format(page))
+                response["page:{}".format(page)]["link"] = url_response["_links"][
+                    "self"
+                ]["href"]
+                logging.getLogger("core").info("page {} is completed.".format(page))
             finally:
                 payloads["page"] = str(int(page) + 1)
         self.response = response
@@ -291,25 +313,28 @@ class PridePeptideRetriever(GenericPrideRetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {"peptideSequence": self._request_word,
-                             "pageSize": 200}
+            self.payloads = {"peptideSequence": self._request_word, "pageSize": 200}
 
         self.url = self.api
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads)
+        url_response = requests.get(
+            self.url, headers=self.headers, params=self.payloads
+        )
         return url_response
 
     def get_payloads_on_web(self):
         """Access the URL and get the list of parameters of the URL through redirection.
-           访问URL并通过重定向获得URL的参数列表。
+        访问URL并通过重定向获得URL的参数列表。
         """
         url_response = self.url_requester()
 
         if url_response.ok:
             url_response = url_response.json()
-            self.url, self.payloads = utility.url_split(url_response["_links"]['self']['href'])
+            self.url, self.payloads = utility.url_split(
+                url_response["_links"]["self"]["href"]
+            )
 
         return url_response
 
@@ -321,7 +346,7 @@ class PrideProteinRetriever(GenericPrideRetriever):
         super().__init__()
         self.response = dict()
         self.api = "https://www.ebi.ac.uk/pride/ws/archive/v2/peptideevidences"
-        self.example = 'E9PV96'
+        self.example = "E9PV96"
 
     @property
     def request_word(self):
@@ -344,11 +369,16 @@ class PrideProteinRetriever(GenericPrideRetriever):
             self._request_word
 
         """
-        if re.match('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}',
-                    request_word).group() == request_word:
+        if (
+            re.match(
+                "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}",
+                request_word,
+            ).group()
+            == request_word
+        ):
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def retrieve(self):
         """Used to request peptide data from PRIDE database. 用于向PRIDE数据库请求蛋白质数据。
@@ -365,29 +395,36 @@ class PrideProteinRetriever(GenericPrideRetriever):
         response = dict()
         flag = False
 
-        logging.getLogger('core').info('query:{}'.format(self._request_word))
+        logging.getLogger("core").info("query:{}".format(self._request_word))
         while flag is False:
             try:
-                page = payloads['page']
+                page = payloads["page"]
             except KeyError as e:
-                logging.getLogger('core').error(e)
-                logging.getLogger('core').error('Reply 1 time')
+                logging.getLogger("core").error(e)
+                logging.getLogger("core").error("Reply 1 time")
                 self.get_payloads_on_web()
-                page = payloads['page']
+                page = payloads["page"]
 
-            url_response = requests.get(url, headers=headers, params=payloads,
-                                        timeout=120  # Avoid blocking
-                                        ).json()
+            url_response = requests.get(
+                url,
+                headers=headers,
+                params=payloads,
+                timeout=120,  # Avoid blocking
+            ).json()
             try:
-                response['page:{}'.format(page)] = {'peptideevidences': url_response['_embedded']['peptideevidences']}
+                response["page:{}".format(page)] = {
+                    "peptideevidences": url_response["_embedded"]["peptideevidences"]
+                }
             except KeyError:
                 flag = True
                 # flag = self.check_end_page(url, payloads)
             else:
-                response['page:{}'.format(page)]['link'] = url_response["_links"]["self"]["href"]
-                logging.getLogger('core').info('page {} is completed.'.format(page))
+                response["page:{}".format(page)]["link"] = url_response["_links"][
+                    "self"
+                ]["href"]
+                logging.getLogger("core").info("page {} is completed.".format(page))
             finally:
-                payloads['page'] = str(int(page) + 1)
+                payloads["page"] = str(int(page) + 1)
         self.response = response
 
     def url_requester(self):
@@ -398,35 +435,38 @@ class PrideProteinRetriever(GenericPrideRetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'proteinAccession': self._request_word,
-                             'pageSize': 200}
+            self.payloads = {"proteinAccession": self._request_word, "pageSize": 200}
 
         self.url = self.api
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads)
+        url_response = requests.get(
+            self.url, headers=self.headers, params=self.payloads
+        )
         return url_response
 
     def get_payloads_on_web(self):
         """Access the URL and get the list of parameters of the URL through redirection
-           访问URL并通过重定向获得URL的参数列表
+        访问URL并通过重定向获得URL的参数列表
         """
         url_response = self.url_requester()
 
         if url_response.ok:
             url_response = url_response.json()
-            self.url, self.payloads = utility.url_split(url_response["_links"]['self']['href'])
+            self.url, self.payloads = utility.url_split(
+                url_response["_links"]["self"]["href"]
+            )
 
 
 class GenericIProXRetriever(Retriever):
     """Generic base class for iProX database. 针对iProX数据库的通用基类。"""
 
     def __init__(self):
-        self._request_word = ''  # Keywords to be requested 需要请求的关键词
+        self._request_word = ""  # Keywords to be requested 需要请求的关键词
         self.headers = None  # HTTP protocol headers HTTP协议的标头
         self.payloads = None  # parameters. 参数列表
-        self.url = ''  # URL 网址
+        self.url = ""  # URL 网址
 
     def retrieve(self):
         """Call the methods run by the class IProXRetriever. 调用IProXRetriever类运行的方法。"""
@@ -438,7 +478,7 @@ class GenericIProXRetriever(Retriever):
 
     def get_payloads_on_web(self):
         """Access iProX API and get the list of parameters of the URL through redirection.
-           访问iProX API并通过重定向获得URL的参数列表。
+        访问iProX API并通过重定向获得URL的参数列表。
         """
         raise NotImplementedError
 
@@ -449,8 +489,8 @@ class IProXProjectRetriever(GenericIProXRetriever):
     def __init__(self):
         super().__init__()
         self.response = dict()
-        self.api = 'https://www.iprox.cn/proxi/datasets'
-        self.example = 'PXD006512'
+        self.api = "https://www.iprox.cn/proxi/datasets"
+        self.example = "PXD006512"
 
     @property
     def request_word(self):
@@ -481,14 +521,14 @@ class IProXProjectRetriever(GenericIProXRetriever):
             self.response
         """
         url_response = self.url_requester()
-        logging.getLogger('core').debug('query:{}'.format(self._request_word))
+        logging.getLogger("core").debug("query:{}".format(self._request_word))
 
         if url_response.ok:
             url_response = url_response.json()
         else:
-            logging.error('No correct return transmission received! 未收到正确回传！')
+            logging.error("No correct return transmission received! 未收到正确回传！")
             url_response = dict()
-        time.sleep(.3)
+        time.sleep(0.3)
         self.response = url_response
 
     def url_requester(self):
@@ -499,18 +539,21 @@ class IProXProjectRetriever(GenericIProXRetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
 
         self.url = "/".join((self.api, self._request_word))
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads,
-                                    timeout=120  # Avoid blocking
-                                    )
+        url_response = requests.get(
+            self.url,
+            headers=self.headers,
+            params=self.payloads,
+            timeout=120,  # Avoid blocking
+        )
         return url_response
 
     def get_payloads_on_web(self):
         """Occupy a seat 占位"""
-        raise NotImplementedError("Don\'t need that in this class. 该类不需要这个！")
+        raise NotImplementedError("Don't need that in this class. 该类不需要这个！")
 
 
 class IProXPeptideRetriever(GenericIProXRetriever):
@@ -520,7 +563,7 @@ class IProXPeptideRetriever(GenericIProXRetriever):
         super().__init__()
         self.response = dict()
         self.api = "https://www.iprox.cn/proxi/spectra"
-        self.example = 'TCVADESAENCDK'
+        self.example = "TCVADESAENCDK"
 
     @property
     def request_word(self):
@@ -559,23 +602,26 @@ class IProXPeptideRetriever(GenericIProXRetriever):
         response = dict()
         flag = False
 
-        logging.getLogger('core').info(f'query:{self._request_word}')
+        logging.getLogger("core").info(f"query:{self._request_word}")
         while flag is False:
-            page = payloads['pageNumber']
-            url_response = requests.get(url, headers=headers, params=payloads,
-                                        timeout=60  # Avoid blocking
-                                        )
+            page = payloads["pageNumber"]
+            url_response = requests.get(
+                url,
+                headers=headers,
+                params=payloads,
+                timeout=60,  # Avoid blocking
+            )
 
             if url_response.ok:
                 if url_response.json():
-                    response[f'page:{page}'] = url_response.json()
-                    logging.getLogger('core').info("page {} is completed.".format(page))
+                    response[f"page:{page}"] = url_response.json()
+                    logging.getLogger("core").info("page {} is completed.".format(page))
                 else:
                     flag = True
             else:
-                logging.getLogger('core').error(url_response.json())
+                logging.getLogger("core").error(url_response.json())
                 raise requests.exceptions.RequestException(url_response.json())
-            payloads['pageNumber'] = str(int(page) + 1)
+            payloads["pageNumber"] = str(int(page) + 1)
 
         self.response = response
 
@@ -589,19 +635,23 @@ class IProXPeptideRetriever(GenericIProXRetriever):
         if self.headers is None:
             self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'peptideSequence': self._request_word,
-                             'pageNumber': '1',
-                             'pageSize': '200',
-                             'resultType': 'compact'}
+            self.payloads = {
+                "peptideSequence": self._request_word,
+                "pageNumber": "1",
+                "pageSize": "200",
+                "resultType": "compact",
+            }
 
         self.url = self.api
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads)
+        url_response = requests.get(
+            self.url, headers=self.headers, params=self.payloads
+        )
         return url_response
 
     def get_payloads_on_web(self):
         """Access the URL and get the list of parameters of the URL through redirection.
-           访问URL并通过重定向获得URL的参数列表。
+        访问URL并通过重定向获得URL的参数列表。
         """
         url_response = self.url_requester()
 
@@ -618,8 +668,8 @@ class IProXProteinRetriever(GenericIProXRetriever):
     def __init__(self):
         super().__init__()
         self.response = dict()
-        self.api = 'https://www.iprox.cn/proxi/psms'
-        self.example = 'P60709'
+        self.api = "https://www.iprox.cn/proxi/psms"
+        self.example = "P60709"
 
     @property
     def request_word(self):
@@ -641,11 +691,16 @@ class IProXProteinRetriever(GenericIProXRetriever):
         Updates:
             self._request_word
         """
-        if re.match('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}',
-                    request_word).group() == request_word:
+        if (
+            re.match(
+                "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}",
+                request_word,
+            ).group()
+            == request_word
+        ):
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def retrieve(self):
         """Used to request protein data from iProX database. 用于向iProX数据库请求蛋白质数据。
@@ -660,24 +715,27 @@ class IProXProteinRetriever(GenericIProXRetriever):
         response = dict()
         flag = False
 
-        logging.getLogger('core').info(f'query:{self._request_word}')
+        logging.getLogger("core").info(f"query:{self._request_word}")
 
         while flag is False:
-            page = payloads['pageNumber']
-            url_response = requests.get(url, headers=headers, params=payloads,
-                                        timeout=120  # Avoid blocking
-                                        )
+            page = payloads["pageNumber"]
+            url_response = requests.get(
+                url,
+                headers=headers,
+                params=payloads,
+                timeout=120,  # Avoid blocking
+            )
 
             if url_response.ok:
                 if url_response.json():
-                    response[f'page:{page}'] = url_response.json()
-                    logging.getLogger('core').info("page {} is completed.".format(page))
+                    response[f"page:{page}"] = url_response.json()
+                    logging.getLogger("core").info("page {} is completed.".format(page))
                 else:
                     flag = True
             else:
-                logging.getLogger('core').error(url_response.json())
+                logging.getLogger("core").error(url_response.json())
                 raise requests.exceptions.RequestException(url_response.json())
-            payloads['pageNumber'] = str(int(page) + 1)
+            payloads["pageNumber"] = str(int(page) + 1)
 
         self.response = response
 
@@ -689,21 +747,25 @@ class IProXProteinRetriever(GenericIProXRetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'proteinAccession': self._request_word,
-                             'pageNumber': '1',
-                             'pageSize': '200',
-                             'resultType': 'compact'}
+            self.payloads = {
+                "proteinAccession": self._request_word,
+                "pageNumber": "1",
+                "pageSize": "200",
+                "resultType": "compact",
+            }
 
         self.url = self.api
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads)
+        url_response = requests.get(
+            self.url, headers=self.headers, params=self.payloads
+        )
         return url_response
 
     def get_payloads_on_web(self):
         """Access the URL and get the list of parameters of the URL through redirection
-           访问URL并通过重定向获得URL的参数列表
+        访问URL并通过重定向获得URL的参数列表
         """
         url_response = self.url_requester()
 
@@ -716,16 +778,16 @@ class GenericMassIVERetriever(Retriever):
     """Generic base class for MassIVE database. 针对 MassIVE 数据库的通用基类。"""
 
     def __init__(self):
-        self._request_word = ''  # Keywords to be requested 需要请求的关键词
-        self.headers = None      # HTTP protocol headers HTTP协议的标头
-        self.payloads = None     # parameters. 参数列表
-        self.url = ''            # URL 网址
-        self.response = None     # Collect the returned data through this property. 通过这个属性收集返回的数据。
+        self._request_word = ""  # Keywords to be requested 需要请求的关键词
+        self.headers = None  # HTTP protocol headers HTTP协议的标头
+        self.payloads = None  # parameters. 参数列表
+        self.url = ""  # URL 网址
+        self.response = None  # Collect the returned data through this property. 通过这个属性收集返回的数据。
 
-        self.api = ''
-        self._total = None       # total rows in this retrieve
-        self._current = None     # current page
-        self._offsets = None     # threshold of page
+        self.api = ""
+        self._total = None  # total rows in this retrieve
+        self._current = None  # current page
+        self._offsets = None  # threshold of page
 
     def retrieve(self):
         """Used to request data from MassIVE database. 用于向 MassIVE 数据库请求数据。
@@ -738,31 +800,35 @@ class GenericMassIVERetriever(Retriever):
         response = dict()
         flag = False
 
-        logging.getLogger('core').info(f'query:{self._request_word}')
+        logging.getLogger("core").info(f"query:{self._request_word}")
 
         while flag is False:
             page = self._current
             try:
-                self.payloads['offset'] = self._offsets[page]
+                self.payloads["offset"] = self._offsets[page]
             except IndexError:
                 break
             except TypeError:
                 break
 
             url = self.massive_api_parse(self.api, self.payloads)
-            url_response = requests.get(url,
-                                        headers=headers,
-                                        timeout=60  # Avoid blocking
-                                        )
+            url_response = requests.get(
+                url,
+                headers=headers,
+                timeout=60,  # Avoid blocking
+            )
             if url_response.ok:
-                response[f"page:{page}"] = url_response.json()['row_data']
-                logging.getLogger('core').info(f"page {page} is completed.")
+                response[f"page:{page}"] = url_response.json()["row_data"]
+                logging.getLogger("core").info(f"page {page} is completed.")
                 self._current += 1
             else:
-                logging.getLogger('core').error(url_response.json())
+                logging.getLogger("core").error(url_response.json())
                 raise requests.exceptions.RequestException(url_response.json())
 
-            if len(response[f"page:{page}"]) < self.payloads['pageSize'] and len(self._offsets) <= self._current - 1:
+            if (
+                len(response[f"page:{page}"]) < self.payloads["pageSize"]
+                and len(self._offsets) <= self._current - 1
+            ):
                 flag = True
 
         self.response = response
@@ -773,27 +839,31 @@ class GenericMassIVERetriever(Retriever):
 
     def get_payloads_on_web(self):
         """Access the URL and get the list of parameters of the URL through redirection.
-           访问URL并通过重定向获得URL的参数列表。
+        访问URL并通过重定向获得URL的参数列表。
         """
         url_response = self.url_requester()
 
         if url_response.ok:
             url_response_json = url_response.json()
-            self._total = int(url_response_json['total_rows'])
-            self._offsets = [i for i in range(0, self._total, self.payloads['pageSize'])]
+            self._total = int(url_response_json["total_rows"])
+            self._offsets = [
+                i for i in range(0, self._total, self.payloads["pageSize"])
+            ]
             self._current = 0
 
         return url_response
 
     @staticmethod
     def massive_api_parse(base_url, payload):
-        url_params = f"{base_url}?" \
-                     f"pageSize={payload['pageSize']}&" \
-                     f"offset={payload['offset']}&" \
-                     f"query_type={payload['query_type']}&"
+        url_params = (
+            f"{base_url}?"
+            f"pageSize={payload['pageSize']}&"
+            f"offset={payload['offset']}&"
+            f"query_type={payload['query_type']}&"
+        )
 
-        query = ''
-        for k in payload['query'].keys():
+        query = ""
+        for k in payload["query"].keys():
             query = f"{query}%2C%22{k}%22%3A%22{payload['query'][k]}%22"
 
         url_query = f"query=%23%7B{query}%7D"
@@ -808,8 +878,8 @@ class MassIVEProjectRetriever(GenericMassIVERetriever):
 
     def __init__(self):
         super().__init__()
-        self.api = 'http://massive.ucsd.edu/ProteoSAFe/proxi/v0.1/datasets'
-        self.example = 'PXD014834'
+        self.api = "http://massive.ucsd.edu/ProteoSAFe/proxi/v0.1/datasets"
+        self.example = "PXD014834"
 
     @property
     def request_word(self):
@@ -834,7 +904,7 @@ class MassIVEProjectRetriever(GenericMassIVERetriever):
                 self._request_word = request_word
 
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def retrieve(self):
         """Used to request project data from MassIVE database. 用于向 MassIVE 数据库请求项目数据。
@@ -853,10 +923,12 @@ class MassIVEProjectRetriever(GenericMassIVERetriever):
             url_response = url_response.json()
 
         else:
-            logging.error(f'No correct return transmission received! 未收到正确回传！[{self._request_word}]')
+            logging.error(
+                f"No correct return transmission received! 未收到正确回传！[{self._request_word}]"
+            )
             url_response = dict()
 
-        time.sleep(.3)
+        time.sleep(0.3)
         self.response = url_response
         return self.response
 
@@ -868,19 +940,22 @@ class MassIVEProjectRetriever(GenericMassIVERetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
 
         self.url = "/".join((self.api, self._request_word))
 
-        url_response = requests.get(self.url, headers=self.headers, params=self.payloads,
-                                    timeout=120  # Avoid blocking
-                                    )
+        url_response = requests.get(
+            self.url,
+            headers=self.headers,
+            params=self.payloads,
+            timeout=120,  # Avoid blocking
+        )
 
         return url_response
 
     def get_payloads_on_web(self):
         """Occupy a seat 占位"""
-        raise NotImplementedError("Don\'t need that in this class. 该类不需要这个！")
+        raise NotImplementedError("Don't need that in this class. 该类不需要这个！")
 
 
 class MassIVEPeptideRetriever(GenericMassIVERetriever):
@@ -889,7 +964,7 @@ class MassIVEPeptideRetriever(GenericMassIVERetriever):
     def __init__(self):
         super().__init__()
         self.api = "http://massive.ucsd.edu/ProteoSAFe/QueryPROXI"
-        self.example = 'DDDIAALVVDNGSGMCKAGFAGDDAPR'
+        self.example = "DDDIAALVVDNGSGMCKAGFAGDDAPR"
 
     @property
     def request_word(self):
@@ -913,7 +988,7 @@ class MassIVEPeptideRetriever(GenericMassIVERetriever):
         if check and check.group() == request_word:
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def url_requester(self):
         """API for direct access to MassIVE database peptide data. 用于直接访问 MassIVE 数据库肽段数据的API。
@@ -923,16 +998,17 @@ class MassIVEPeptideRetriever(GenericMassIVERetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'pageSize': 200,
-                             'offset': 0,
-                             'query': {'peptide': self._request_word},
-                             'query_type': 'psm'
-                             }
+            self.payloads = {
+                "pageSize": 200,
+                "offset": 0,
+                "query": {"peptide": self._request_word},
+                "query_type": "psm",
+            }
 
         payloads = self.payloads.copy()
-        payloads['pageSize'] = 1
+        payloads["pageSize"] = 1
         self.url = self.massive_api_parse(self.api, payloads)
 
         url_response = requests.get(self.url, headers=self.headers)
@@ -945,7 +1021,7 @@ class MassIVEProteinRetriever(GenericMassIVERetriever):
     def __init__(self):
         super().__init__()
         self.api = "http://massive.ucsd.edu/ProteoSAFe/QueryPROXI"
-        self.example = 'P60709'
+        self.example = "P60709"
 
     @property
     def request_word(self):
@@ -967,11 +1043,16 @@ class MassIVEProteinRetriever(GenericMassIVERetriever):
         Updates:
             self._request_word
         """
-        if re.match('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}',
-                    request_word).group() == request_word:
+        if (
+            re.match(
+                "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}",
+                request_word,
+            ).group()
+            == request_word
+        ):
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def url_requester(self):
         """API for direct access to MassIVE database protein data. 用于直接访问 MassIVE 数据库蛋白质数据的API。
@@ -981,16 +1062,17 @@ class MassIVEProteinRetriever(GenericMassIVERetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'pageSize': 200,
-                             'offset': 0,
-                             'query': {'protein': f"*|{self._request_word}|*"},
-                             'query_type': 'protein'
-                             }
+            self.payloads = {
+                "pageSize": 200,
+                "offset": 0,
+                "query": {"protein": f"*|{self._request_word}|*"},
+                "query_type": "protein",
+            }
 
         payloads = self.payloads.copy()
-        payloads['pageSize'] = 1
+        payloads["pageSize"] = 1
         self.url = self.massive_api_parse(self.api, payloads)
 
         url_response = requests.get(self.url, headers=self.headers)
@@ -999,13 +1081,13 @@ class MassIVEProteinRetriever(GenericMassIVERetriever):
 
 class MassIVEPro2ProjectRetriever(GenericMassIVERetriever):
     """Used to retriever project information by protein accession in the MassIVE database.
-       用于在 MassIVE 数据库中按蛋白质编号检索项目信息。
+    用于在 MassIVE 数据库中按蛋白质编号检索项目信息。
     """
 
     def __init__(self):
         super().__init__()
         self.api = "http://massive.ucsd.edu/ProteoSAFe/QueryPROXI"
-        self.example = 'P60709'
+        self.example = "P60709"
 
     @property
     def request_word(self):
@@ -1025,11 +1107,16 @@ class MassIVEPro2ProjectRetriever(GenericMassIVERetriever):
             self._request_word
 
         """
-        if re.match('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}',
-                    request_word).group() == request_word:
+        if (
+            re.match(
+                "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}",
+                request_word,
+            ).group()
+            == request_word
+        ):
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def url_requester(self):
         """API for direct access to MassIVE database project data. 用于直接访问 MassIVE 数据库项目数据的API。
@@ -1039,16 +1126,17 @@ class MassIVEPro2ProjectRetriever(GenericMassIVERetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'pageSize': 200,
-                             'offset': 0,
-                             'query': {'protein': f"*|{self._request_word}|*"},
-                             'query_type': 'dataset'
-                             }
+            self.payloads = {
+                "pageSize": 200,
+                "offset": 0,
+                "query": {"protein": f"*|{self._request_word}|*"},
+                "query_type": "dataset",
+            }
 
         payloads = self.payloads.copy()
-        payloads['pageSize'] = 1
+        payloads["pageSize"] = 1
         self.url = self.massive_api_parse(self.api, payloads)
 
         url_response = requests.get(self.url, headers=self.headers)
@@ -1057,13 +1145,13 @@ class MassIVEPro2ProjectRetriever(GenericMassIVERetriever):
 
 class MassIVEPep2ProjectRetriever(GenericMassIVERetriever):
     """Used to retriever peptide sequence by protein accession in the MassIVE database.
-       用于在 MassIVE 数据库中按肽段序列检索项目信息。
+    用于在 MassIVE 数据库中按肽段序列检索项目信息。
     """
 
     def __init__(self):
         super().__init__()
         self.api = "http://massive.ucsd.edu/ProteoSAFe/QueryPROXI"
-        self.example = 'DDDIAALVVDNGSGMCKAGFAGDDAPR'
+        self.example = "DDDIAALVVDNGSGMCKAGFAGDDAPR"
 
     @property
     def request_word(self):
@@ -1087,7 +1175,7 @@ class MassIVEPep2ProjectRetriever(GenericMassIVERetriever):
         if check and check.group() == request_word:
             self._request_word = request_word
         else:
-            raise TypeError('Input error! 输入错误！')
+            raise TypeError("Input error! 输入错误！")
 
     def url_requester(self):
         """API for direct access to MassIVE database project data. 用于直接访问 MassIVE 数据库项目数据的API。
@@ -1097,16 +1185,17 @@ class MassIVEPep2ProjectRetriever(GenericMassIVERetriever):
 
         """
         if self.headers is None:
-            self.headers = {'Accept': 'application/json'}
+            self.headers = {"Accept": "application/json"}
         if self.payloads is None:
-            self.payloads = {'pageSize': 200,
-                             'offset': 0,
-                             'query': {'peptide': self._request_word},
-                             'query_type': 'dataset'
-                             }
+            self.payloads = {
+                "pageSize": 200,
+                "offset": 0,
+                "query": {"peptide": self._request_word},
+                "query_type": "dataset",
+            }
 
         payloads = self.payloads.copy()
-        payloads['pageSize'] = 1
+        payloads["pageSize"] = 1
         self.url = self.massive_api_parse(self.api, payloads)
 
         url_response = requests.get(self.url, headers=self.headers)

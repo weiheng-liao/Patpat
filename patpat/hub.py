@@ -37,6 +37,7 @@ QueryHub类提供对蛋白质元数据的查询和需要检索肽段的生成功
     m.mapping()
     result_ = m.export()
 """
+
 import json
 import os
 import re
@@ -65,12 +66,12 @@ class QueryHub(object):
     """
 
     def __init__(self):
-        self.identifier: str = ''  # protein sequence
+        self.identifier: str = ""  # protein sequence
         self.peptides: list = []  # Filtered peptides for output to external
         self.organism: dict = dict()  # dict, Organism to which the protein belongs.
 
         self.fasta: dict = dict()  # Structuring protein fasta into a dictionary.
-        self.source: str = ''  # Local proteome file address
+        self.source: str = ""  # Local proteome file address
 
         self.digestion_params: list = []  # Parameters of protein in-silico enzymatic
 
@@ -113,9 +114,11 @@ class QueryHub(object):
             self.fasta
         """
         self.protein_querier.query()
-        self.identifier, self.organism, self.fasta = self.protein_querier.get_properties()
+        self.identifier, self.organism, self.fasta = (
+            self.protein_querier.get_properties()
+        )
 
-        return self.fasta['sequence'], self.organism
+        return self.fasta["sequence"], self.organism
 
     def peptide_query(self):
         """Call the class PeptideQuerier in itself. 在自身中调用PeptideQuerier类。
@@ -136,7 +139,9 @@ class QueryHub(object):
             self.peptides
         """
         self.peptide_querier.query()
-        self.digestion_params, self.source, self.peptides = self.peptide_querier.get_properties()
+        self.digestion_params, self.source, self.peptides = (
+            self.peptide_querier.get_properties()
+        )
 
         return self.digestion_params, self.source, self.peptides
 
@@ -159,8 +164,9 @@ class QueryHub(object):
         self.protein_query()
 
         self.peptide_querier = querier.LocalPeptideQuerier()
-        self.peptide_querier.set_params(sequence=self.fasta['sequence'],
-                                        organism=self.organism)
+        self.peptide_querier.set_params(
+            sequence=self.fasta["sequence"], organism=self.organism
+        )
         self.peptide_query()
 
     def get_query_config(self):
@@ -175,13 +181,14 @@ class QueryHub(object):
                            'description': self.fasta['description']
                           }
         """
-        config = {'identifier': self.identifier,
-                  'peptides': self.peptides,
-                  'organism': self.organism,
-                  'digestion': self.digestion_params,
-                  'proteome_source': self.source,
-                  'description': self.fasta['description']
-                  }
+        config = {
+            "identifier": self.identifier,
+            "peptides": self.peptides,
+            "organism": self.organism,
+            "digestion": self.digestion_params,
+            "proteome_source": self.source,
+            "description": self.fasta["description"],
+        }
 
         return config
 
@@ -231,29 +238,34 @@ class MapperHub:
         插入新建的Mapper类，若想要实现断点续传，需更改该函数。
         """
         task = self._task
-        if os.path.exists(f'patpat_env/tmp/{task}.log'):
-            with open(f'patpat_env/tmp/{task}.log', mode='r') as f:
-                data = [re.split('\t', i) for i in f.readlines()]
-            self._tmp['PRIDE_peptide'] = [[i[1], i[2][:-1]] for i in data if i[0] == 'PRIDE_peptide']
-            self._tmp['iProX_peptide'] = [[i[1], i[2][:-1]] for i in data if i[0] == 'iProX_peptide']
+        if os.path.exists(f"patpat_env/tmp/{task}.log"):
+            with open(f"patpat_env/tmp/{task}.log", mode="r") as f:
+                data = [re.split("\t", i) for i in f.readlines()]
+            self._tmp["PRIDE_peptide"] = [
+                [i[1], i[2][:-1]] for i in data if i[0] == "PRIDE_peptide"
+            ]
+            self._tmp["iProX_peptide"] = [
+                [i[1], i[2][:-1]] for i in data if i[0] == "iProX_peptide"
+            ]
         else:
-            self._tmp['PRIDE_peptide'] = []
-            self._tmp['iProX_peptide'] = []
+            self._tmp["PRIDE_peptide"] = []
+            self._tmp["iProX_peptide"] = []
 
     def _set_mapping_config(self, config: dict):
         """Update configuration"""
         self.config = config.copy()
-        self.config['task'] = self._task
-        self.config['mappers'] = []
+        self.config["task"] = self._task
+        self.config["mappers"] = []
         for m in self.mappers:
-            self.config['mappers'].extend([m.__str__])
-        self.config['state'] = 'Preparation'
+            self.config["mappers"].extend([m.__str__])
+        self.config["state"] = "Preparation"
 
     def _set_mappers(self, mappers: {list, set}):
         """Set Mappers"""
         for mapper_ in mappers:
-            if (type(mapper_) in self.supported_mappers and
-                    type(mapper_) not in [type(m) for m in self.mappers]):
+            if type(mapper_) in self.supported_mappers and type(mapper_) not in [
+                type(m) for m in self.mappers
+            ]:
                 self.mappers.add(mapper_)
 
     def mapping(self):
@@ -263,32 +275,37 @@ class MapperHub:
         插入新建的Mapper类，若想要实现断点续传，需更改该函数。
         """
         mappers = set()
-        self.config['startTime'] = time.time()
-        self.config['state'] = 'Running'
+        self.config["startTime"] = time.time()
+        self.config["state"] = "Running"
         self._set_task_info()
 
         try:
             for mapper_ in self.mappers:
-
                 # These three keys (protein UniProt identifier, peptide to be searched, species) are
                 # required in the configuration.
                 # 这三个键（蛋白UniProt识别符、需要搜索的肽段、物种）是配置中必须的。
-                mapper_._identifier = self.config['identifier']
-                mapper_._peptides = self.config['peptides']
-                mapper_._organism = self.config['organism']
+                mapper_._identifier = self.config["identifier"]
+                mapper_._peptides = self.config["peptides"]
+                mapper_._organism = self.config["organism"]
 
                 # Implement breakpoint transfer
                 tmp = None
-                if mapper_.__class__ is mapper.PrideMapper and self._tmp['PRIDE_peptide']:
-                    tmp = self._tmp['PRIDE_peptide']
-                elif mapper_.__class__ is mapper.IProXMapper and self._tmp['iProX_peptide']:
-                    tmp = self._tmp['iProX_peptide']
+                if (
+                    mapper_.__class__ is mapper.PrideMapper
+                    and self._tmp["PRIDE_peptide"]
+                ):
+                    tmp = self._tmp["PRIDE_peptide"]
+                elif (
+                    mapper_.__class__ is mapper.IProXMapper
+                    and self._tmp["iProX_peptide"]
+                ):
+                    tmp = self._tmp["iProX_peptide"]
 
                 if tmp:
                     tmp_peptides = set([i[0] for i in tmp])
                     mapper_._peptides = list(set(mapper_._peptides) - tmp_peptides)
                     for p in tmp_peptides:
-                        logging.getLogger('core').debug(f'Local loading: {p}')
+                        logging.getLogger("core").debug(f"Local loading: {p}")
 
                     tmp = [i for i in tmp if utility.usi_detect(i[1])]  # 去掉空白搜索
 
@@ -297,33 +314,33 @@ class MapperHub:
                 mappers.add(mapper_)
             self.mappers = mappers
         except:
-            self.config['state'] = 'Error'
-            logging.getLogger('core').error('RUNNING ERROR')
+            self.config["state"] = "Error"
+            logging.getLogger("core").error("RUNNING ERROR")
             self._set_task_info()
-            raise BufferError(f'RUNNING ERROR:{sys.exc_info()}')
+            raise BufferError(f"RUNNING ERROR:{sys.exc_info()}")
         else:
-            self.config['state'] = 'Success'
+            self.config["state"] = "Success"
             self._set_task_info()
 
     def _set_task_info(self):
         """Write information about this task to a local file."""
-        if os.path.exists('patpat_env/logs/tasks.json'):
-            with open('patpat_env/logs/tasks.json', 'r') as fr:
+        if os.path.exists("patpat_env/logs/tasks.json"):
+            with open("patpat_env/logs/tasks.json", "r") as fr:
                 configs = json.loads(fr.readline())
                 config = self.config.copy()
-                config['peptides'] = len(config['peptides'])
-                configs['tasks'][config['task']] = config
+                config["peptides"] = len(config["peptides"])
+                configs["tasks"][config["task"]] = config
             fr.close()
-            with open('patpat_env/logs/tasks.json', 'w') as fw:
+            with open("patpat_env/logs/tasks.json", "w") as fw:
                 configs_json = json.dumps(configs)
                 fw.write(configs_json)
         else:
             config = self.config.copy()
-            config['peptides'] = len(config['peptides'])
+            config["peptides"] = len(config["peptides"])
             configs = dict()
-            configs['tasks'] = {config['task']: config}
+            configs["tasks"] = {config["task"]: config}
             configs_json = json.dumps(configs)
-            with open('patpat_env/logs/tasks.json', mode='w') as f:
+            with open("patpat_env/logs/tasks.json", mode="w") as f:
                 f.write(configs_json)
 
     def export(self):
@@ -336,34 +353,38 @@ class MapperHub:
         for m in self.mappers:
             output[m.__str__] = m.export()
 
-        if os.path.exists(f'patpat_env/result/{self._task}'):
+        if os.path.exists(f"patpat_env/result/{self._task}"):
             pass
         else:
-            os.mkdir(f'patpat_env/result/{self._task}')
+            os.mkdir(f"patpat_env/result/{self._task}")
 
-        with open(f'patpat_env/result/{self._task}/config.json', 'w') as fw:
+        with open(f"patpat_env/result/{self._task}/config.json", "w") as fw:
             config = json.dumps(self.config)
             fw.write(config)
 
-        with open(f'patpat_env/result/{self._task}/result.json', 'w') as fw:
+        with open(f"patpat_env/result/{self._task}/result.json", "w") as fw:
             output_json = json.dumps(output)
             fw.write(output_json)
 
-        with open(f'patpat_env/result/{self._task}/result.tsv', 'w') as fw:
-            fw.write('title\tsummary\twebsite\n')
+        with open(f"patpat_env/result/{self._task}/result.tsv", "w") as fw:
+            fw.write("title\tsummary\twebsite\n")
             for projects in output.values():
                 for project in projects.values():
                     try:
-                        fw.write(f"{project['title']}\t{project['summary']}\t{project['website']}\n")
+                        fw.write(
+                            f"{project['title']}\t{project['summary']}\t{project['website']}\n"
+                        )
                     except UnicodeEncodeError:
                         fw.write(
-                            f"{project['title']}\t{project['summary'].encode(errors='ignore')}\t{project['website']}\n")
+                            f"{project['title']}\t{project['summary'].encode(errors='ignore')}\t{project['website']}\n"
+                        )
 
         return output
 
 
 class CheckerHub:
     """Call all of Checker"""
+
     def __init__(self):
         self.recommended_mappers = []
         self.checkers = None
@@ -379,4 +400,3 @@ class CheckerHub:
                 self.recommended_mappers.extend([m])
 
         return self.recommended_mappers
-

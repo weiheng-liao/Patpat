@@ -13,6 +13,7 @@ class CoreLogger用于生成日志和搜索临时文件，建议配合hub.py和v
     l.set_core()
     l.set_tmp()
 """
+
 import logging
 import sys
 
@@ -33,22 +34,26 @@ class CoreLogger:
         """
         self.id = uuid
         # Create the Logger object for log generation. 创建用于生成日志的Logger对象。
-        self.logger = logging.getLogger('core')
-        self.fmt = logging.Formatter('%(asctime)s\t%(levelname)s\t%(module)s\t%(funcName)s\t%(message)s')
+        self.logger = logging.getLogger("core")
+        self.fmt = logging.Formatter(
+            "%(asctime)s\t%(levelname)s\t%(module)s\t%(funcName)s\t%(message)s"
+        )
         self.logger.setLevel(logging.DEBUG)
 
         # Create the Logger object used to generate the temporary file. 创建用于生成临时的Logger对象
-        self.tmp = logging.getLogger('tmp')
+        self.tmp = logging.getLogger("tmp")
         self.tmp.setLevel(logging.INFO)
 
     def set_core(self):
         """Used to set up two log processors, one sends logs to sys.stderr and the other sends them to the uuid.log file.
-           用于设置两个日志处理器，一个将日志发送到sys.stderr，另一个将日志发送到uuid.log文件。
+        用于设置两个日志处理器，一个将日志发送到sys.stderr，另一个将日志发送到uuid.log文件。
         """
         sh = logging.StreamHandler(stream=sys.stdout)
-        sh.setFormatter(logging.Formatter('%(message)s'))
+        sh.setFormatter(logging.Formatter("%(message)s"))
         sh.setLevel(logging.INFO)
-        fh = logging.FileHandler(filename=f'patpat_env/logs/{self.id}.log', encoding='utf-8')
+        fh = logging.FileHandler(
+            filename=f"patpat_env/logs/{self.id}.log", encoding="utf-8"
+        )
         fh.setFormatter(self.fmt)
 
         self.logger.addHandler(sh)
@@ -56,17 +61,19 @@ class CoreLogger:
 
     def set_tmp(self):
         """Processor used to set the log to be sent to the temporary file. 用于设置发送日志至临时文件的处理器。"""
-        fh = logging.FileHandler(filename=f'patpat_env/tmp/{self.id}.log', encoding='utf-8')
-        fh.setFormatter(logging.Formatter('%(message)s'))
+        fh = logging.FileHandler(
+            filename=f"patpat_env/tmp/{self.id}.log", encoding="utf-8"
+        )
+        fh.setFormatter(logging.Formatter("%(message)s"))
         self.tmp.addHandler(fh)
 
 
 class TestLogger:
     def __init__(self):
-        self.logger = logging.getLogger('core')
+        self.logger = logging.getLogger("core")
         self.logger.setLevel(logging.DEBUG)
 
         self.sh = logging.StreamHandler(stream=sys.stdout)
-        self.sh.setFormatter(logging.Formatter('%(message)s'))
+        self.sh.setFormatter(logging.Formatter("%(message)s"))
 
         self.logger.addHandler(self.sh)

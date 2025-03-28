@@ -38,6 +38,7 @@ to structure the retrieve results for downstream modules to call.
 
     output = m.export()
 """
+
 import time
 import re
 import logging
@@ -73,7 +74,9 @@ class Mapper(object):
         raise NotImplementedError
 
     @staticmethod
-    def retriever_running(any_retriever, payload: dict = None, overtime: int = 5, sleep: int = 3):
+    def retriever_running(
+        any_retriever, payload: dict = None, overtime: int = 5, sleep: int = 3
+    ):
         """Decorator or Closures. Pack the retriever to prevent processes from being interrupted
         during network fluctuations.
         装饰器或闭包。封装检索器，防止因网络波动而中断进程。
@@ -103,14 +106,14 @@ class Mapper(object):
             try:
                 any_retriever.retrieve()
             except requests.exceptions.RequestException as e:
-                logging.getLogger('core').warning(f'Error:{e}')
+                logging.getLogger("core").warning(f"Error:{e}")
                 time.sleep(sleep)
 
                 if t > overtime:
                     flag = True
-                    logging.getLogger('core').info(f'{t}/{overtime} times, Stop!')
+                    logging.getLogger("core").info(f"{t}/{overtime} times, Stop!")
                 else:
-                    logging.getLogger('core').info(f'{t}/{overtime} times, Try again!')
+                    logging.getLogger("core").info(f"{t}/{overtime} times, Try again!")
 
             else:
                 break
@@ -122,7 +125,7 @@ class PrideMapper(Mapper):
     """Mapper subclass for PRIDE database. 针对PRIDE数据库的Mapper子类。"""
 
     def __init__(self, payload=None):
-        self.__str__ = 'PRIDE'  # name of database
+        self.__str__ = "PRIDE"  # name of database
         self._identifier = None  # str, Protein accession
         self._peptides = None  # list,  Peptide sequences to be retrieved
         self._organism = None  # dict, Organism to which the protein belongs. E.g.: {'name': 'xx', 'accession': 'xx'}
@@ -134,7 +137,7 @@ class PrideMapper(Mapper):
 
     def mapping(self, peptide_tmp: list = None):
         """Functions that implement the retrieve and complete the mapping. 实现检索和完成映射的函数。"""
-        logging.getLogger('core').info('Select PRIDE to search.')
+        logging.getLogger("core").info("Select PRIDE to search.")
 
         # Conduct protein & peptide retrieve
         peptides_level = self.mapping2peptides()
@@ -156,7 +159,9 @@ class PrideMapper(Mapper):
             protein_retriever.request_word = self._identifier
             protein_retriever.get_payloads_on_web()
 
-            protein_retriever, _ = self.retriever_running(protein_retriever, payload=self.payload)
+            protein_retriever, _ = self.retriever_running(
+                protein_retriever, payload=self.payload
+            )
 
             protein_level = self.protein_response_parse(protein_retriever)
 
@@ -167,11 +172,11 @@ class PrideMapper(Mapper):
     @staticmethod
     def protein_response_parse(protein_retriever):
         """Implementing structured results of protein level retrieve. 实现蛋白质水平检索的结果结构化。"""
-        t = [p['peptideevidences'] for p in protein_retriever.response.values()]
+        t = [p["peptideevidences"] for p in protein_retriever.response.values()]
         ans_list = []
         for i in t:
             for j in i:
-                ans_list.append([j['peptideSequence'], j['accession']])
+                ans_list.append([j["peptideSequence"], j["accession"]])
 
         return ans_list
 
@@ -179,10 +184,10 @@ class PrideMapper(Mapper):
         """Implementing peptide level retrieve. 实现肽段水平的检索。"""
         if self._peptides is None:
             peptides_level = None
-            logging.getLogger('core').warning('No peptide can be retrieve!')
+            logging.getLogger("core").warning("No peptide can be retrieve!")
         elif isinstance(self._peptides, list):
             peptides_level = []
-            logging.getLogger('core').info(f'Find {len(self._peptides)} peptides all.')
+            logging.getLogger("core").info(f"Find {len(self._peptides)} peptides all.")
         else:
             raise TypeError
 
@@ -191,15 +196,19 @@ class PrideMapper(Mapper):
             peptide_retriever.request_word = peptide
             peptide_retriever.get_payloads_on_web()
 
-            peptide_retriever, pass_flag = self.retriever_running(peptide_retriever, payload=self.payload)
+            peptide_retriever, pass_flag = self.retriever_running(
+                peptide_retriever, payload=self.payload
+            )
 
             ans_list = self.peptide_response_parse(peptide_retriever)
             if ans_list:
                 peptides_level.extend(ans_list)
                 for i in ans_list:
-                    logging.getLogger('tmp').info(f'PRIDE_peptide\t{i[0]}\t{i[1]}')
+                    logging.getLogger("tmp").info(f"PRIDE_peptide\t{i[0]}\t{i[1]}")
             else:
-                logging.getLogger('tmp').info(f'PRIDE_peptide\t{peptide}\tNone')  # 把空白搜索加入缓存中以避免重复搜索
+                logging.getLogger("tmp").info(
+                    f"PRIDE_peptide\t{peptide}\tNone"
+                )  # 把空白搜索加入缓存中以避免重复搜索
 
             if pass_flag:
                 continue
@@ -211,32 +220,42 @@ class PrideMapper(Mapper):
     @staticmethod
     def peptide_response_parse(peptide_retriever):
         """Implementing structured results of peptide level retrieve. 实现肽段水平检索的结果结构化。"""
-        t = [p['spectraevidences'] for p in peptide_retriever.response.values()]
+        t = [p["spectraevidences"] for p in peptide_retriever.response.values()]
         ans_list = []
         for i in t:
             for j in i:
-                ans_list.append([j.get('peptideSequence'), j.get('usi')])
+                ans_list.append([j.get("peptideSequence"), j.get("usi")])
         return ans_list
 
     def mapping2project(self, protein_level, peptides_level):
         """Implementing mapping between retrieve result and project. 实现检索结果和项目之间的映射。"""
-        logging.getLogger('core').info('Mapping to project...')
+        logging.getLogger("core").info("Mapping to project...")
         project_base = dict()
 
         if protein_level:
-            protein_level = [[p[0], p[1]] + [i for i in self.pride_usi_split(p[1]).values()] for p in protein_level]
+            protein_level = [
+                [p[0], p[1]] + [i for i in self.pride_usi_split(p[1]).values()]
+                for p in protein_level
+            ]
             self._protein_level = protein_level
         if peptides_level:
-            peptides_level = [[p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()] for p in peptides_level]
+            peptides_level = [
+                [p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()]
+                for p in peptides_level
+            ]
             self._peptides_level = peptides_level
 
-        projects = set([i[2] for i in peptides_level]).union(set([i[2] for i in protein_level]))
+        projects = set([i[2] for i in peptides_level]).union(
+            set([i[2] for i in protein_level])
+        )
 
         for project in tqdm.tqdm(projects):
             project_retriever = retriever.PrideProjectRetriever()
             project_retriever.request_word = project
 
-            project_retriever, pass_flag = self.retriever_running(project_retriever, payload=self.payload)
+            project_retriever, pass_flag = self.retriever_running(
+                project_retriever, payload=self.payload
+            )
 
             project_base[project] = project_retriever.response
 
@@ -244,7 +263,7 @@ class PrideMapper(Mapper):
                 continue
 
         self._project_base = project_base
-        logging.getLogger('core').info('PRIDE mapping completed.')
+        logging.getLogger("core").info("PRIDE mapping completed.")
 
     def filtering(self):
         """Implementing remove for incorrect mappings. 排除不正确的映射。
@@ -260,9 +279,9 @@ class PrideMapper(Mapper):
         """
         del_projects = []
         for p in self._project_base.values():
-            project_org = [i['accession'] for i in p['organisms']]
-            if self._organism['accession'] not in project_org:
-                del_projects.extend([p['accession']])
+            project_org = [i["accession"] for i in p["organisms"]]
+            if self._organism["accession"] not in project_org:
+                del_projects.extend([p["accession"]])
         for p in del_projects:
             self._project_base.pop(p)
 
@@ -285,17 +304,19 @@ class PrideMapper(Mapper):
 
             # These five keys are necessary 这五个key是必要的
 
-            projects[project]['title'] = projects[project]['title']
+            projects[project]["title"] = projects[project]["title"]
 
             # Used to record the mapping of protein and peptide levels
-            projects[project]['peptides'] = peptides
-            projects[project]['protein'] = protein
+            projects[project]["peptides"] = peptides
+            projects[project]["protein"] = protein
 
             # Used to record the summary of project
-            projects[project]['summary'] = projects[project]['projectDescription']
+            projects[project]["summary"] = projects[project]["projectDescription"]
 
             # Used to record the website of project
-            projects[project]['website'] = f'http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID={project}'
+            projects[project]["website"] = (
+                f"http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID={project}"
+            )
 
         return projects
 
@@ -304,15 +325,17 @@ class PrideMapper(Mapper):
         """Splitting PRIDE USI"""
         component = dict()
 
-        collection = re.search('\\S*?(?=:)', usi)
+        collection = re.search("\\S*?(?=:)", usi)
 
-        component['collection'] = collection.group()
+        component["collection"] = collection.group()
 
         split_point1 = collection.end() + 1
-        split_point2 = re.search('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}:\\d*', usi).end()
+        split_point2 = re.search(
+            "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}:\\d*", usi
+        ).end()
 
-        component['msRun+index'] = usi[split_point1:split_point2 - 1]
-        component['interpretation'] = usi[split_point2:]
+        component["msRun+index"] = usi[split_point1 : split_point2 - 1]
+        component["interpretation"] = usi[split_point2:]
 
         return component
 
@@ -325,7 +348,11 @@ class PrideMapper(Mapper):
             return False
 
         else:
-            if re.search("pxd", c['collection'], re.I) and c['msRun+index'] and c['interpretation']:
+            if (
+                re.search("pxd", c["collection"], re.I)
+                and c["msRun+index"]
+                and c["interpretation"]
+            ):
                 return True
             else:
                 return False
@@ -335,7 +362,7 @@ class IProXMapper(Mapper):
     """Mapper subclass for iProX database. 针对iProX数据库的Mapper子类。"""
 
     def __init__(self, payload=None):
-        self.__str__ = 'iProX'  # name of database
+        self.__str__ = "iProX"  # name of database
         self._identifier = None  # str, Protein accession
         self._peptides = None  # list,  Peptide sequences to be retrieved
         self._organism = None  # dict, Organism to which the protein belongs. E.g.: {'name': 'xx', 'accession': 'xx'}
@@ -347,7 +374,7 @@ class IProXMapper(Mapper):
 
     def mapping(self, peptide_tmp: list = None):
         """Functions that implement the retrieve and complete the mapping. 实现检索和完成映射的函数。"""
-        logging.getLogger('core').info('Select iProX to search.')
+        logging.getLogger("core").info("Select iProX to search.")
 
         # Conduct protein & peptide retrieve
         peptides_level = self.mapping2peptides()
@@ -369,7 +396,9 @@ class IProXMapper(Mapper):
             protein_retriever.request_word = self._identifier
             protein_retriever.get_payloads_on_web()
 
-            protein_retriever, _ = self.retriever_running(protein_retriever, payload=self.payload)
+            protein_retriever, _ = self.retriever_running(
+                protein_retriever, payload=self.payload
+            )
 
             protein_level = self.protein_response_parse(protein_retriever)
 
@@ -383,7 +412,7 @@ class IProXMapper(Mapper):
         ans_list = []
 
         for ps in protein_retriever.response.values():
-            ans_list.extend([[p['peptideSequence'], p['usi']] for p in ps])
+            ans_list.extend([[p["peptideSequence"], p["usi"]] for p in ps])
 
         return ans_list
 
@@ -391,10 +420,10 @@ class IProXMapper(Mapper):
         """Implementing peptide level retrieve. 实现肽段水平的检索。"""
         if self._peptides is None:
             peptides_level = None
-            logging.getLogger('core').warning('No peptide can be retrieve!')
+            logging.getLogger("core").warning("No peptide can be retrieve!")
         elif isinstance(self._peptides, list):
             peptides_level = []
-            logging.getLogger('core').info(f'Find {len(self._peptides)} peptides all.')
+            logging.getLogger("core").info(f"Find {len(self._peptides)} peptides all.")
         else:
             raise TypeError
 
@@ -404,7 +433,9 @@ class IProXMapper(Mapper):
                 peptide_retriever.request_word = peptide
                 peptide_retriever.get_payloads_on_web()
 
-                peptide_retriever, pass_flag = self.retriever_running(peptide_retriever, payload=self.payload)
+                peptide_retriever, pass_flag = self.retriever_running(
+                    peptide_retriever, payload=self.payload
+                )
 
                 time.sleep(n / len(self._peptides))  # Take a break
 
@@ -413,9 +444,9 @@ class IProXMapper(Mapper):
                     peptides_level.extend(ans_list)
 
                     for i in ans_list:
-                        logging.getLogger('tmp').info(f'iProX_peptide\t{i[0]}\t{i[1]}')
+                        logging.getLogger("tmp").info(f"iProX_peptide\t{i[0]}\t{i[1]}")
                 else:
-                    logging.getLogger('tmp').info(f'iProX_peptide\t{peptide}\tNone')
+                    logging.getLogger("tmp").info(f"iProX_peptide\t{peptide}\tNone")
                 if pass_flag:
                     continue
 
@@ -430,32 +461,44 @@ class IProXMapper(Mapper):
         requests_word = peptide_retriever.request_word
         for ps in peptide_retriever.response.values():
             for p in ps:
-                interpretation = utility.usi_split(p['usi'])['interpretation']
-                answer_word = re.search('.*(?=/)', re.sub('\\[.*?]', '', interpretation)).group()
+                interpretation = utility.usi_split(p["usi"])["interpretation"]
+                answer_word = re.search(
+                    ".*(?=/)", re.sub("\\[.*?]", "", interpretation)
+                ).group()
                 if requests_word == answer_word:
-                    ans_list.append([requests_word, p['usi']])
+                    ans_list.append([requests_word, p["usi"]])
 
         return ans_list
 
     def mapping2project(self, protein_level, peptides_level):
         """Implementing mapping between retrieve result and project. 实现检索结果和项目之间的映射。"""
-        logging.getLogger('core').info('Mapping to project...')
+        logging.getLogger("core").info("Mapping to project...")
         project_base = dict()
 
         if protein_level:
-            protein_level = [[p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()] for p in protein_level]
+            protein_level = [
+                [p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()]
+                for p in protein_level
+            ]
             self._protein_level = protein_level
         if peptides_level:
-            peptides_level = [[p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()] for p in peptides_level]
+            peptides_level = [
+                [p[0], p[1]] + [i for i in utility.usi_split(p[1]).values()]
+                for p in peptides_level
+            ]
             self._peptides_level = peptides_level
 
-        projects = set([i[2] for i in peptides_level]).union(set([i[2] for i in protein_level]))
+        projects = set([i[2] for i in peptides_level]).union(
+            set([i[2] for i in protein_level])
+        )
 
         for project in tqdm.tqdm(projects):
             project_retriever = retriever.IProXProjectRetriever()
             project_retriever.request_word = project
 
-            project_retriever, pass_flag = self.retriever_running(project_retriever, payload=self.payload)
+            project_retriever, pass_flag = self.retriever_running(
+                project_retriever, payload=self.payload
+            )
 
             project_base[project] = project_retriever.response
 
@@ -463,7 +506,7 @@ class IProXMapper(Mapper):
                 continue
 
         self._project_base = project_base
-        logging.getLogger('core').info('iProX mapping completed.')
+        logging.getLogger("core").info("iProX mapping completed.")
 
     def filtering(self):
         """Implementing remove for incorrect mappings. 排除不正确的映射。
@@ -478,11 +521,10 @@ class IProXMapper(Mapper):
             Update self.project_base: dict, key: project accession, value: project content
         """
         projects = [
-            p['accession']['value'] for p in self._project_base.values()
-            if self._organism['accession'] in [
-                i['name'] for i in p['species']
-                if i['accession'] == 'MS:1001467'
-            ]
+            p["accession"]["value"]
+            for p in self._project_base.values()
+            if self._organism["accession"]
+            in [i["name"] for i in p["species"] if i["accession"] == "MS:1001467"]
         ]
 
         project_base = dict()
@@ -509,17 +551,19 @@ class IProXMapper(Mapper):
 
             # These five keys are necessary 这五个key是必要的
 
-            projects[project]['title'] = projects[project]['title']
+            projects[project]["title"] = projects[project]["title"]
 
             # Used to record the mapping of protein and peptide levels
-            projects[project]['peptides'] = peptides
-            projects[project]['protein'] = protein
+            projects[project]["peptides"] = peptides
+            projects[project]["protein"] = protein
 
             # Used to record the summary of project
-            projects[project]['summary'] = projects[project]['summary']
+            projects[project]["summary"] = projects[project]["summary"]
 
             # Used to record the website of project
-            projects[project]['website'] = f'http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID={project}'
+            projects[project]["website"] = (
+                f"http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID={project}"
+            )
 
         return projects
 
@@ -528,7 +572,7 @@ class MassIVEMapper(Mapper):
     """Mapper subclass for MassIVE database. 针对 MassIVE 数据库的 Mapper 子类。"""
 
     def __init__(self, payload=None):
-        self.__str__ = 'MassIVE'  # name of database
+        self.__str__ = "MassIVE"  # name of database
         self._identifier = None  # str, Protein accession
         self._peptides = None  # list,  Peptide sequences to be retrieved
         self._organism = None  # dict, Organism to which the protein belongs. E.g.: {'name': 'xx', 'accession': 'xx'}
@@ -540,7 +584,7 @@ class MassIVEMapper(Mapper):
 
     def mapping(self, peptide_tmp=None):
         """Functions that implement the retrieve and complete the mapping. 实现检索和完成映射的函数。"""
-        logging.getLogger('core').info('Select MassIVE to search.')
+        logging.getLogger("core").info("Select MassIVE to search.")
 
         # Conduct protein & peptide retrieve
         peptides_level = self.mapping2peptides()
@@ -559,9 +603,13 @@ class MassIVEMapper(Mapper):
             test_request = protein_retriever.get_payloads_on_web()
 
             if not test_request.ok:
-                logging.getLogger('core').info(f'Protein {self._identifier} no request.')
+                logging.getLogger("core").info(
+                    f"Protein {self._identifier} no request."
+                )
 
-            protein_retriever, _ = self.retriever_running(protein_retriever, payload=self.payload)
+            protein_retriever, _ = self.retriever_running(
+                protein_retriever, payload=self.payload
+            )
 
             protein_level = self.protein_response_parse(protein_retriever)
 
@@ -578,7 +626,7 @@ class MassIVEMapper(Mapper):
                 ans_list.extend(project)
 
             for project in ans_list:
-                project['target'] = {"protein": [protein_retriever.request_word]}
+                project["target"] = {"protein": [protein_retriever.request_word]}
 
         return ans_list
 
@@ -586,10 +634,10 @@ class MassIVEMapper(Mapper):
         """Implementing peptide level retrieve. 实现肽段水平的检索。"""
         if self._peptides is None:
             peptides_level = None
-            logging.getLogger('core').warning('No peptide can be retrieve!')
+            logging.getLogger("core").warning("No peptide can be retrieve!")
         elif isinstance(self._peptides, list):
             peptides_level = []
-            logging.getLogger('core').info(f'Find {len(self._peptides)} peptides all.')
+            logging.getLogger("core").info(f"Find {len(self._peptides)} peptides all.")
         else:
             raise TypeError
 
@@ -600,10 +648,12 @@ class MassIVEMapper(Mapper):
                 test_request = peptide_retriever.get_payloads_on_web()
 
                 if not test_request:
-                    logging.getLogger('core').info(f'Peptide {peptide} no request.')
+                    logging.getLogger("core").info(f"Peptide {peptide} no request.")
                     continue
 
-                peptide_retriever, pass_flag = self.retriever_running(peptide_retriever, payload=self.payload)
+                peptide_retriever, pass_flag = self.retriever_running(
+                    peptide_retriever, payload=self.payload
+                )
 
                 # time.sleep(n / len(self._peptides))  # Take a break
 
@@ -628,13 +678,13 @@ class MassIVEMapper(Mapper):
                 ans_list.extend(project)
 
             for project in ans_list:
-                project['target'] = {"peptides": [peptide_retriever.request_word]}
+                project["target"] = {"peptides": [peptide_retriever.request_word]}
 
         return ans_list
 
     def mapping2project(self, protein_level, peptides_level):
         """Implementing mapping between retrieve result and project. 实现检索结果和项目之间的映射。"""
-        logging.getLogger('core').info('Mapping to project...')
+        logging.getLogger("core").info("Mapping to project...")
         project_base = dict()
 
         if protein_level:
@@ -642,50 +692,64 @@ class MassIVEMapper(Mapper):
                 try:
                     project_base[f"{project['dataset_name']}"]
                 except KeyError:
-                    project_base[f"{project['dataset_name']}"] = {'MASSIVE': project}
+                    project_base[f"{project['dataset_name']}"] = {"MASSIVE": project}
                 else:
                     try:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['protein']
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "protein"
+                        ]
                     except KeyError:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['protein'] = \
-                            project['target']["protein"]
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "protein"
+                        ] = project["target"]["protein"]
                     else:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['protein'].extend(
-                            project['target']["protein"])
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "protein"
+                        ].extend(project["target"]["protein"])
 
         if peptides_level:
             for project in peptides_level:
                 try:
                     project_base[f"{project['dataset_name']}"]
                 except KeyError:
-                    project_base[f"{project['dataset_name']}"] = {'MASSIVE': project}
+                    project_base[f"{project['dataset_name']}"] = {"MASSIVE": project}
                 else:
                     try:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['peptides']
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "peptides"
+                        ]
                     except KeyError:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['peptides'] = \
-                            project['target']["peptides"]
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "peptides"
+                        ] = project["target"]["peptides"]
                     else:
-                        project_base[f"{project['dataset_name']}"]['MASSIVE']['target']['peptides'].extend(
-                            project['target']["peptides"])
+                        project_base[f"{project['dataset_name']}"]["MASSIVE"]["target"][
+                            "peptides"
+                        ].extend(project["target"]["peptides"])
 
         for project in tqdm.tqdm(project_base.keys()):
             project_retriever = retriever.MassIVEProjectRetriever()
             project_retriever.request_word = project
 
-            project_retriever, pass_flag = self.retriever_running(project_retriever, payload=self.payload)
+            project_retriever, pass_flag = self.retriever_running(
+                project_retriever, payload=self.payload
+            )
 
-            project_base[project]['PROXI'] = project_retriever.response
+            project_base[project]["PROXI"] = project_retriever.response
 
             if pass_flag:
                 continue
 
-        t = [i['MASSIVE']['dataset_name'] for i in project_base.values() if not i['PROXI']]
+        t = [
+            i["MASSIVE"]["dataset_name"]
+            for i in project_base.values()
+            if not i["PROXI"]
+        ]
         for i in t:
             project_base.pop(i)
 
         self._project_base = project_base
-        logging.getLogger('core').info('MassIVE mapping completed.')
+        logging.getLogger("core").info("MassIVE mapping completed.")
 
     def filtering(self):
         """Implementing remove for incorrect mappings. 排除不正确的映射。
@@ -703,13 +767,13 @@ class MassIVEMapper(Mapper):
         all_project = set(self._project_base.keys())
         pass_project = set()
         for project in self._project_base.values():
-            for species in project['PROXI']['species']:
+            for species in project["PROXI"]["species"]:
                 t = []
                 for s in species:
-                    if s['accession'] == 'MS:1001467':
-                        t.extend([s['value']])
-                if self._organism['accession'] in t:
-                    pass_project.add(project['MASSIVE']['dataset_name'])
+                    if s["accession"] == "MS:1001467":
+                        t.extend([s["value"]])
+                if self._organism["accession"] in t:
+                    pass_project.add(project["MASSIVE"]["dataset_name"])
 
         del_project = all_project - pass_project
 
@@ -729,19 +793,20 @@ class MassIVEMapper(Mapper):
         projects = self._project_base.copy()
 
         for project in projects.keys():
-
             # These five keys are necessary 这五个key是必要的
 
             # Used to record the title of project
-            projects[project]['title'] = projects[project]['PROXI']['title']
+            projects[project]["title"] = projects[project]["PROXI"]["title"]
 
             # Used to record the mapping of protein and peptide levels
-            projects[project]['peptides'] = None
-            projects[project]['protein'] = None
+            projects[project]["peptides"] = None
+            projects[project]["protein"] = None
             # Used to record the summary of project
-            projects[project]['summary'] = projects[project]['MASSIVE']['description']
+            projects[project]["summary"] = projects[project]["MASSIVE"]["description"]
 
             # Used to record the website of project
-            projects[project]['website'] = f'https://massive.ucsd.edu/ProteoSAFe/FindDatasets?query={project}'
+            projects[project]["website"] = (
+                f"https://massive.ucsd.edu/ProteoSAFe/FindDatasets?query={project}"
+            )
 
         return projects

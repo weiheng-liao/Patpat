@@ -45,13 +45,12 @@ class ProteinQuerier(object):
 
     def __init__(self):
         # Structuring protein fasta into a dictionary. 将蛋白质fasta结构化为字典。
-        self.fasta: dict = {
-            'description': '',
-            'sequence': ''
-        }
-        self.organism: dict = dict()  # the species or tissue to which the protein belongs 蛋白质物种或组织信息
-        self.identifier: str = ''  # Identifier of protein 蛋白质的识别符
-        self._headers: dict = {'Accept': 'application/json'}
+        self.fasta: dict = {"description": "", "sequence": ""}
+        self.organism: dict = (
+            dict()
+        )  # the species or tissue to which the protein belongs 蛋白质物种或组织信息
+        self.identifier: str = ""  # Identifier of protein 蛋白质的识别符
+        self._headers: dict = {"Accept": "application/json"}
 
     def _request_api(self, *args):
         """Functions that actually interact with the protein database. 实际与蛋白质数据库交互的函数。"""
@@ -78,8 +77,10 @@ class PeptideQuerier(object):
     """
 
     def __init__(self):
-        self.sequence: str = ''  # protein sequence 蛋白质序列
-        self.organism: dict = dict()  # the species or tissue to which the protein belongs 蛋白质物种或组织信息
+        self.sequence: str = ""  # protein sequence 蛋白质序列
+        self.organism: dict = (
+            dict()
+        )  # the species or tissue to which the protein belongs 蛋白质物种或组织信息
 
         # Filtered peptides for output to external 经过筛选的肽段，可输出至外部
         self.filtered_peptides: list = []
@@ -102,7 +103,7 @@ class PeptideQuerier(object):
 
 class UniProtProteinQuerier(ProteinQuerier):
     """ProteinQuerier subclass for querying protein metadata through the UniProt database.
-       通过UniProt数据库查询蛋白质元数据的ProteinQuerier子类。
+    通过UniProt数据库查询蛋白质元数据的ProteinQuerier子类。
     """
 
     def __init__(self):
@@ -120,8 +121,7 @@ class UniProtProteinQuerier(ProteinQuerier):
         """
         acc = accession
         url = f"https://rest.uniprot.org/uniprotkb/stream?compressed=false&format=fasta&query={acc}"
-        protein_fasta = requests.get(url,
-                                     headers=self._headers).text
+        protein_fasta = requests.get(url, headers=self._headers).text
         return protein_fasta
 
     def set_params(self, accession):
@@ -136,10 +136,18 @@ class UniProtProteinQuerier(ProteinQuerier):
         Updates:
             self.identifier
         """
-        if re.match('[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}', accession).group() == accession:
+        if (
+            re.match(
+                "[OPQ]\\d[A-Z\\d]{3}\\d|[A-NR-Z]\\d([A-Z][A-Z\\d]{2}\\d){1,2}",
+                accession,
+            ).group()
+            == accession
+        ):
             self.identifier = accession
         else:
-            raise TypeError('Can not identify identifier, please input UniProt accession.')
+            raise TypeError(
+                "Can not identify identifier, please input UniProt accession."
+            )
 
     def query(self):
         """Functions for external calls. 供外部调用的函数。
@@ -155,17 +163,21 @@ class UniProtProteinQuerier(ProteinQuerier):
             ValueError: self.identifier is empty.
         """
         if not self.identifier:
-            raise ValueError('Please run func self.set_params() first. 请先运行self.set_params()函数')
+            raise ValueError(
+                "Please run func self.set_params() first. 请先运行self.set_params()函数"
+            )
 
         protein_fasta = self._request_api(self.identifier)
-        fasta_sep = re.split('\n', protein_fasta)
-        self.fasta['description'] = fasta_sep[0]
-        self.fasta['sequence'] = ''.join(fasta_sep[1:])
+        fasta_sep = re.split("\n", protein_fasta)
+        self.fasta["description"] = fasta_sep[0]
+        self.fasta["sequence"] = "".join(fasta_sep[1:])
 
-        self.organism['name'] = re.search('(?<=OS=).*(?=OX=)',
-                                          self.fasta['description']).group()[:-1]
-        self.organism['accession'] = re.search('(?<=OX=).*(?=GN=)',
-                                               self.fasta['description']).group()[:-1]
+        self.organism["name"] = re.search(
+            "(?<=OS=).*(?=OX=)", self.fasta["description"]
+        ).group()[:-1]
+        self.organism["accession"] = re.search(
+            "(?<=OX=).*(?=GN=)", self.fasta["description"]
+        ).group()[:-1]
 
     def get_properties(self):
         """Functions to get query results. 获取查询结果的函数。
@@ -181,27 +193,29 @@ class UniProtProteinQuerier(ProteinQuerier):
         if self.identifier:
             return self.identifier, self.organism, self.fasta
         elif self.identifier is None:
-            raise ValueError('Please run func self.set_params() first. 请先运行self.set_params()函数')
+            raise ValueError(
+                "Please run func self.set_params() first. 请先运行self.set_params()函数"
+            )
 
 
 class LocalPeptideQuerier(PeptideQuerier):
     """The PeptideQuerier subclass used to generate the peptide sequences by local library building.
-       通过本地建库的方法产生肽段序列的PeptideQuerier子类。
+    通过本地建库的方法产生肽段序列的PeptideQuerier子类。
     """
 
     def __init__(self):
         super().__init__()
 
-        self.digestion_params = None  # Parameters of protein in-silico enzymatic 蛋白质模拟酶切的参数
+        self.digestion_params = (
+            None  # Parameters of protein in-silico enzymatic 蛋白质模拟酶切的参数
+        )
         self.source = None  # Local proteome file address 本地蛋白质组文件地址
         self._searched_peptides = None  # Peptide information after local database search 经过本地数据库搜索的肽段信息
         self._base = None  # Local Peptide Database 本地肽段数据库
 
-    def set_params(self,
-                   sequence,
-                   organism,
-                   digestion_params: dict = None,
-                   source: str = None):
+    def set_params(
+        self, sequence, organism, digestion_params: dict = None, source: str = None
+    ):
         """Functions for setting query parameters. 设置查询参数的函数。
 
         Args:
@@ -224,10 +238,11 @@ class LocalPeptideQuerier(PeptideQuerier):
 
         if digestion_params is None:
             digestion_params = {
-                'rules': 'trypsin',
-                'miss': 1,
-                'min_length': 7,
-                'max_length': 35}
+                "rules": "trypsin",
+                "miss": 1,
+                "min_length": 7,
+                "max_length": 35,
+            }
 
         self.digestion_params = digestion_params
         self.source = source
@@ -241,11 +256,15 @@ class LocalPeptideQuerier(PeptideQuerier):
         Updates:
             self._peptides
         """
-        self._peptides = list(parser.cleave(self.sequence,
-                                            rule=self.digestion_params['rules'],
-                                            missed_cleavages=self.digestion_params['miss'],
-                                            min_length=self.digestion_params['min_length'],
-                                            max_length=self.digestion_params['max_length']))
+        self._peptides = list(
+            parser.cleave(
+                self.sequence,
+                rule=self.digestion_params["rules"],
+                missed_cleavages=self.digestion_params["miss"],
+                min_length=self.digestion_params["min_length"],
+                max_length=self.digestion_params["max_length"],
+            )
+        )
 
     def search(self, threshold=1):
         """Functions for local library search. 用于本地数据库搜索的函数
@@ -263,31 +282,33 @@ class LocalPeptideQuerier(PeptideQuerier):
             self._base
             self.filtered_peptides
         """
-        print('Choose local peptide search.')
+        print("Choose local peptide search.")
 
         source = self._select_local_proteome()
 
-        print(f'Proteome file: {source}')
+        print(f"Proteome file: {source}")
 
         f = fasta.read(source)
         input_peps = self._peptides
         try:
-            rule = self.digestion_params['rules']
-            miss = self.digestion_params['miss']
-            min_length = self.digestion_params['min_length']
-            max_length = self.digestion_params['max_length']
+            rule = self.digestion_params["rules"]
+            miss = self.digestion_params["miss"]
+            min_length = self.digestion_params["min_length"]
+            max_length = self.digestion_params["max_length"]
 
         except ValueError:
-            raise ValueError('digestion() params error!')
+            raise ValueError("digestion() params error!")
 
         base = collections.defaultdict(list)
-        print('Creating database...')
+        print("Creating database...")
         for protein in tqdm.tqdm(f):
-            peptides = parser.cleave(protein.sequence,
-                                     rule=rule,
-                                     missed_cleavages=miss,
-                                     min_length=min_length,
-                                     max_length=max_length)
+            peptides = parser.cleave(
+                protein.sequence,
+                rule=rule,
+                missed_cleavages=miss,
+                min_length=min_length,
+                max_length=max_length,
+            )
             for peptide in peptides:
                 try:
                     base[peptide][0] += 1
@@ -301,12 +322,12 @@ class LocalPeptideQuerier(PeptideQuerier):
                 ans[pep].append(base[pep][0])
                 ans[pep].append(base[pep][1])
             except IndexError:
-                ans[pep] = [0, 'loss']
+                ans[pep] = [0, "loss"]
         ans = sorted(zip(ans.values(), ans.keys()))
         ans = [[j for j in utility.flatten(i)] for i in ans]
         errs = [i[2] for i in ans if i[0] == 0]
         if len(errs):
-            print(f'There are some peptides that are not in the query database: {errs}')
+            print(f"There are some peptides that are not in the query database: {errs}")
 
         self._searched_peptides = ans
         self._base = base
@@ -325,27 +346,33 @@ class LocalPeptideQuerier(PeptideQuerier):
         source = self.source
 
         if source is None:
-            taxonomy_id = self.organism['accession']
+            taxonomy_id = self.organism["accession"]
             up_id = utility.uniprot_proteome_id_detect(taxonomy_id)
             file_list = utility.list_local_proteome()
             file_info = utility.proteome_file_info_split(file_list)
 
             target_files = [i for i in file_info if i[1] == up_id]
             if not target_files:
-                print(f"The {self.organism['name']} {up_id} proteome file was not found locally.")
+                print(
+                    f"The {self.organism['name']} {up_id} proteome file was not found locally."
+                )
 
-                flag = input('Do you want to download it?(y/n)')
-                if flag == 'y':
+                flag = input("Do you want to download it?(y/n)")
+                if flag == "y":
                     source = utility.download_uniprot_opg(taxonomy_id)
                 else:
-                    raise FileNotFoundError('User cancel operation.')
+                    raise FileNotFoundError("User cancel operation.")
 
             else:
-                target_file = [i[0] for i in target_files if i[2] == max([j[2] for j in target_files])][0]
-                source = f'patpat_env/proteome/uniprot-proteome_{target_file}.fasta'
+                target_file = [
+                    i[0]
+                    for i in target_files
+                    if i[2] == max([j[2] for j in target_files])
+                ][0]
+                source = f"patpat_env/proteome/uniprot-proteome_{target_file}.fasta"
 
         else:
-            source = f'patpat_env/proteome/{source}'
+            source = f"patpat_env/proteome/{source}"
 
         self.source = source
 
@@ -353,7 +380,7 @@ class LocalPeptideQuerier(PeptideQuerier):
 
     def _search_filter(self, threshold=1):
         """The function is used to filter peptide sequences that are larger than the threshold
-           本函数用于过滤大于阈值的肽段序列
+        本函数用于过滤大于阈值的肽段序列
         """
         ans = self._searched_peptides
 
@@ -372,7 +399,9 @@ class LocalPeptideQuerier(PeptideQuerier):
             ValueError: self.sequence or self.organism is empty.
         """
         if not self.sequence or not self.organism:
-            raise ValueError('Please run func self.set_params() first. 请先运行self.set_params()函数')
+            raise ValueError(
+                "Please run func self.set_params() first. 请先运行self.set_params()函数"
+            )
 
         return self.digestion_params, self.source, self.filtered_peptides
 
@@ -383,7 +412,9 @@ class LocalPeptideQuerier(PeptideQuerier):
             ValueError: self.sequence or self.organism is empty.
         """
         if not self.sequence or not self.organism:
-            raise ValueError('Please run func self.set_params() first. 请先运行self.set_params()函数')
+            raise ValueError(
+                "Please run func self.set_params() first. 请先运行self.set_params()函数"
+            )
 
         self.digestion()
         self.search(threshold=1)
@@ -392,24 +423,22 @@ class LocalPeptideQuerier(PeptideQuerier):
 class UniProtPeptideQuerier(PeptideQuerier):
     """Under Development..."""
 
-    def __init__(self,
-                 sequence,
-                 digestion_params: dict = None,
-                 search_args=None):
+    def __init__(self, sequence, digestion_params: dict = None, search_args=None):
         super().__init__()
         self.sequence = sequence
 
         if digestion_params is None:
             digestion_params = {
-                'rules': 'trypsin',
-                'miss': 1,
-                'min_length': 7,
-                'max_length': 35}
+                "rules": "trypsin",
+                "miss": 1,
+                "min_length": 7,
+                "max_length": 35,
+            }
 
         self.digestion_params = digestion_params
         self.uniprot_job = dict()
         self.search_args = search_args
-        self.source = 'UNIPROT'
+        self.source = "UNIPROT"
 
         self._searched_peptides = None
         self._digestion_params = None
@@ -424,17 +453,21 @@ class UniProtPeptideQuerier(PeptideQuerier):
         pass
 
     def digestion(self):
-        self._peptides = list(parser.cleave(self.sequence,
-                                            rule=self.digestion_params['rules'],
-                                            missed_cleavages=self.digestion_params['miss'],
-                                            min_length=self.digestion_params['min_length'],
-                                            max_length=self.digestion_params['max_length']))
+        self._peptides = list(
+            parser.cleave(
+                self.sequence,
+                rule=self.digestion_params["rules"],
+                missed_cleavages=self.digestion_params["miss"],
+                min_length=self.digestion_params["min_length"],
+                max_length=self.digestion_params["max_length"],
+            )
+        )
 
     def search(self):
-        print('Choose UniProt peptide search.')
+        print("Choose UniProt peptide search.")
 
     def _uniprot_peptide_search_request(self):
-        print('job id={}'.format(self.uniprot_job['job']))
+        print("job id={}".format(self.uniprot_job["job"]))
 
     def _uniprot_peptide_search_check(self):
         # print("This took: {} sec".format(int(end - start)))
@@ -454,15 +487,14 @@ class UniProtPeptideQuerier(PeptideQuerier):
         self.search()
 
 
-if __name__ == '__main__':
-    identifier_ = 'E9PV96'
+if __name__ == "__main__":
+    identifier_ = "E9PV96"
     p1 = UniProtProteinQuerier()
     p1.set_params(accession=identifier_)
     p1.query()
     _, organism_, fasta_ = p1.get_properties()
 
     p2 = LocalPeptideQuerier()
-    p2.set_params(sequence=fasta_['sequence'],
-                  organism=organism_)
+    p2.set_params(sequence=fasta_["sequence"], organism=organism_)
     p2.query()
     digestion_params_, source_, filtered_peptides_ = p2.get_properties()

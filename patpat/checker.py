@@ -1,18 +1,19 @@
 """This module is used to check the connectivity of external proteomics databases 此模块用于确认外部蛋白质组学数据库的连通性
 
-    Typical usage example:
-    典型用法示例：
+Typical usage example:
+典型用法示例：
 
-    from patpat import checker
-    from patpat import retriever
+from patpat import checker
+from patpat import retriever
 
-    c = checker.GenericChecker()
-    c.peptide_retrievers = [
-        retriever.PridePeptideRetriever(),
-        retriever.IProXPeptideRetriever()
-    ]
-    c.check()
+c = checker.GenericChecker()
+c.peptide_retrievers = [
+    retriever.PridePeptideRetriever(),
+    retriever.IProXPeptideRetriever()
+]
+c.check()
 """
+
 import requests
 import tqdm
 
@@ -29,16 +30,8 @@ class PrideChecker(GenericChecker):
     def __init__(self, times=3):
         self.retrievers = None
         self.times = times
-        self.flag = {
-            'project': 0,
-            'protein': 0,
-            'peptide': 0
-        }
-        self.message = {
-            'project': [],
-            'protein': [],
-            'peptide': []
-        }
+        self.flag = {"project": 0, "protein": 0, "peptide": 0}
+        self.message = {"project": [], "protein": [], "peptide": []}
 
     def _implement(self):
         retrievers = retriever.GenericPrideRetriever.__subclasses__()
@@ -64,20 +57,20 @@ class PrideChecker(GenericChecker):
             if isinstance(r, retriever.PrideProjectRetriever):
                 flag, message = self._project_check(project_retriever=r)
                 if flag:
-                    self.flag['project'] = 1
-                self.message['project'] = message
+                    self.flag["project"] = 1
+                self.message["project"] = message
 
             elif isinstance(r, retriever.PrideProteinRetriever):
                 flag, message = self._protein_check(protein_retriever=r)
                 if flag:
-                    self.flag['protein'] = 1
-                self.message['protein'] = message
+                    self.flag["protein"] = 1
+                self.message["protein"] = message
 
             elif isinstance(r, retriever.PridePeptideRetriever):
                 flag, message = self._peptide_check(peptide_retriever=r)
                 if flag:
-                    self.flag['peptide'] = 1
-                self.message['peptide'] = message
+                    self.flag["peptide"] = 1
+                self.message["peptide"] = message
         m = self._ans()
         return m
 
@@ -112,8 +105,7 @@ class PrideChecker(GenericChecker):
         print("\nCheck the connectivity of the PRIDE Protein API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
-                payloads = {'proteinAccession': t.example,
-                            'pageSize': 5}
+                payloads = {"proteinAccession": t.example, "pageSize": 5}
                 c = requests.get(t.api, params=payloads)
             except requests.exceptions.RequestException as e:
                 message.extend([e])
@@ -137,8 +129,7 @@ class PrideChecker(GenericChecker):
         print("\nCheck the connectivity of the PRIDE Peptide API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
-                payloads = {'peptideSequence': t.example,
-                            'pageSize': 5}
+                payloads = {"peptideSequence": t.example, "pageSize": 5}
                 c = requests.get(t.api, params=payloads)
             except requests.exceptions.RequestException as e:
                 message.extend([e])
@@ -159,16 +150,8 @@ class IProXChecker(GenericChecker):
     def __init__(self, times=3):
         self.retrievers = None
         self.times = times
-        self.flag = {
-            'project': 0,
-            'protein': 0,
-            'peptide': 0
-        }
-        self.message = {
-            'project': [],
-            'protein': [],
-            'peptide': []
-        }
+        self.flag = {"project": 0, "protein": 0, "peptide": 0}
+        self.message = {"project": [], "protein": [], "peptide": []}
 
     def _implement(self):
         retrievers = retriever.GenericIProXRetriever.__subclasses__()
@@ -194,20 +177,20 @@ class IProXChecker(GenericChecker):
             if isinstance(r, retriever.IProXProjectRetriever):
                 flag, message = self._project_check(project_retriever=r)
                 if flag:
-                    self.flag['project'] = 1
-                self.message['project'] = message
+                    self.flag["project"] = 1
+                self.message["project"] = message
 
             elif isinstance(r, retriever.IProXProteinRetriever):
                 flag, message = self._protein_check(protein_retriever=r)
                 if flag:
-                    self.flag['protein'] = 1
-                self.message['protein'] = message
+                    self.flag["protein"] = 1
+                self.message["protein"] = message
 
             elif isinstance(r, retriever.IProXPeptideRetriever):
                 flag, message = self._peptide_check(peptide_retriever=r)
                 if flag:
-                    self.flag['peptide'] = 1
-                self.message['peptide'] = message
+                    self.flag["peptide"] = 1
+                self.message["peptide"] = message
         m = self._ans()
         return m
 
@@ -242,10 +225,12 @@ class IProXChecker(GenericChecker):
         print("\nCheck the connectivity of the iProX Protein API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
-                payloads = {'proteinAccession': t.example,
-                            'pageNumber': '1',
-                            'pageSize': '5',
-                            'resultType': 'compact'}
+                payloads = {
+                    "proteinAccession": t.example,
+                    "pageNumber": "1",
+                    "pageSize": "5",
+                    "resultType": "compact",
+                }
                 c = requests.get(t.api, params=payloads)
             except requests.exceptions.RequestException as e:
                 message.extend([e])
@@ -269,10 +254,12 @@ class IProXChecker(GenericChecker):
         print("\nCheck the connectivity of the iProX Peptide API")
         for _ in tqdm.tqdm(range(self.times)):
             try:
-                payloads = {'peptideSequence': t.example,
-                            'pageNumber': '1',
-                            'pageSize': '200',
-                            'resultType': 'compact'}
+                payloads = {
+                    "peptideSequence": t.example,
+                    "pageNumber": "1",
+                    "pageSize": "200",
+                    "resultType": "compact",
+                }
                 c = requests.get(t.api, params=payloads)
             except requests.exceptions.RequestException as e:
                 message.extend([e])
@@ -294,18 +281,18 @@ class MassIVEChecker(GenericChecker):
         self.retrievers = None
         self.times = times
         self.flag = {
-            'project': 0,
-            'protein': 0,
-            'peptide': 0,
-            'protein2project': 0,
-            'peptide2project': 0,
+            "project": 0,
+            "protein": 0,
+            "peptide": 0,
+            "protein2project": 0,
+            "peptide2project": 0,
         }
         self.message = {
-            'project': [],
-            'protein': [],
-            'peptide': [],
-            'protein2project': [],
-            'peptide2project': [],
+            "project": [],
+            "protein": [],
+            "peptide": [],
+            "protein2project": [],
+            "peptide2project": [],
         }
 
     def _implement(self):
@@ -334,32 +321,32 @@ class MassIVEChecker(GenericChecker):
             if isinstance(r, retriever.MassIVEProjectRetriever):
                 flag, message = self._check(this_retriever=r)
                 if flag:
-                    self.flag['project'] = 1
-                self.message['project'] = message
+                    self.flag["project"] = 1
+                self.message["project"] = message
 
             elif isinstance(r, retriever.MassIVEProteinRetriever):
                 flag, message = self._check(this_retriever=r)
                 if flag:
-                    self.flag['protein'] = 1
-                self.message['protein'] = message
+                    self.flag["protein"] = 1
+                self.message["protein"] = message
 
             elif isinstance(r, retriever.MassIVEPeptideRetriever):
                 flag, message = self._check(this_retriever=r)
                 if flag:
-                    self.flag['peptide'] = 1
-                self.message['peptide'] = message
+                    self.flag["peptide"] = 1
+                self.message["peptide"] = message
 
             elif isinstance(r, retriever.MassIVEPro2ProjectRetriever):
                 flag, message = self._check(this_retriever=r)
                 if flag:
-                    self.flag['protein2project'] = 1
-                self.message['protein2project'] = message
+                    self.flag["protein2project"] = 1
+                self.message["protein2project"] = message
 
             elif isinstance(r, retriever.MassIVEPep2ProjectRetriever):
                 flag, message = self._check(this_retriever=r)
                 if flag:
-                    self.flag['peptide2project'] = 1
-                self.message['peptide2project'] = message
+                    self.flag["peptide2project"] = 1
+                self.message["peptide2project"] = message
         m = self._ans()
         return m
 
