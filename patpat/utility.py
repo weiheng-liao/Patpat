@@ -59,14 +59,11 @@ def initiate_uniprot_proteome_catalog():
             |-- proteome/
                 |-- UP_README_yyyy-mm-dd
     """
-
-    ftp = FTP('ftp.uniprot.org')
-    ftp.login()
-    ftp.cwd('./pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/')
+    readme = "http://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/README"
+    response = requests.get(readme)
     download_time = time.strftime('%Y-%m-%d', time.localtime())
     with open(f'patpat_env/proteome/UP_README_{download_time}', mode='wb') as f:
-        ftp.retrbinary(f'RETR README', f.write)
-    ftp.close()
+        f.write(response.text)
     print('Uniprot_proteome_list has been initiated.')
 
 
