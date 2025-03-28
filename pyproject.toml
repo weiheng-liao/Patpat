@@ -8,12 +8,14 @@ name = "Patpat"
 version = "1.2.0"
 authors = [{name = "Weiheng Liao"}]
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "requests",
     "tqdm",
     "pyteomics",
     "pandas",
+    "numpy",
+    "ruff"
 ]
 
 
