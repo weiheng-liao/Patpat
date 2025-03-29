@@ -24,3 +24,10 @@ packages = [
     "patpat",
     "example",
 ]
+
+[tool.ruff]
+# Configuration options for Ruff, see https://docs.astral.sh/ruff/settings/
+line-length = 120
+
+[tool.ruff.lint.isort]
+combine-as-imports = true  # Merge imports onto a single line if their "from" is the same

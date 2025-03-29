@@ -166,7 +166,8 @@ class PrideProjectRetriever(GenericPrideRetriever):
     def __init__(self):
         super().__init__()
         self.response = dict()  # Collect the returned data through this property. 通过这个属性收集返回的数据。
-        self.api = "https://www.ebi.ac.uk/pride/ws/archive/v2/projects"
+        
+        self.api = "https://www.ebi.ac.uk/pride/ws/archive/v3/projects"
         self.example = "PXD003415"
 
     @property
